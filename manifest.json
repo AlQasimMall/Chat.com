@@ -1,99 +1,74 @@
 {
     "name": "تطبيق المحادثة",
     "short_name": "محادثة",
-    "description": "تطبيق محادثة فوري للتواصل مع الأصدقاء",
+    "description": "تطبيق محادثة فوري",
     "start_url": "https://alqasimmall.github.io/Chat.com/",
     "id": "https://alqasimmall.github.io/Chat.com/",
     "scope": "https://alqasimmall.github.io/Chat.com/",
     "display": "standalone",
-    "display_override": ["standalone", "minimal-ui", "fullscreen"],
-    "orientation": "portrait-primary",
-    "dir": "rtl",
-    "lang": "ar",
-    "theme_color": "#7C4DFF",
+    "display_override": ["standalone", "minimal-ui"],
     "background_color": "#7C4DFF",
+    "theme_color": "#7C4DFF",
+    "orientation": "portrait",
     "categories": ["social", "communication"],
-    "launch_handler": {
-        "client_mode": ["navigate-existing", "auto"]
-    },
+    "prefer_related_applications": false,
     "icons": [
         {
-            "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
+            "src": "./icons/icon-72.png",
             "sizes": "72x72",
             "type": "image/png",
-            "purpose": "any"
+            "purpose": "any maskable"
         },
         {
-            "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
+            "src": "./icons/icon-96.png",
             "sizes": "96x96",
             "type": "image/png",
-            "purpose": "any"
+            "purpose": "any maskable"
         },
         {
-            "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
+            "src": "./icons/icon-128.png",
             "sizes": "128x128",
             "type": "image/png",
-            "purpose": "any"
+            "purpose": "any maskable"
         },
         {
-            "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
+            "src": "./icons/icon-144.png",
             "sizes": "144x144",
             "type": "image/png",
-            "purpose": "any"
+            "purpose": "any maskable"
         },
         {
-            "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
+            "src": "./icons/icon-152.png",
             "sizes": "152x152",
             "type": "image/png",
-            "purpose": "any"
+            "purpose": "any maskable"
         },
         {
-            "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
+            "src": "./icons/icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any"
+            "purpose": "any maskable"
         },
         {
-            "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
+            "src": "./icons/icon-384.png",
             "sizes": "384x384",
             "type": "image/png",
-            "purpose": "any"
+            "purpose": "any maskable"
         },
         {
-            "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
+            "src": "./icons/icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
         }
     ],
-    "screenshots": [
-        {
-            "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527",
-            "sizes": "1280x720",
-            "type": "image/png",
-            "platform": "wide",
-            "label": "واجهة المحادثة"
-        }
-    ],
-    "related_applications": [],
-    "prefer_related_applications": false,
     "shortcuts": [
         {
             "name": "فتح المحادثات",
             "short_name": "محادثات",
             "description": "عرض المحادثات الحالية",
             "url": "/chat",
-            "icons": [{ "src": ".https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527", "sizes": "96x96" }]
+            "icons": [{ "src": "./icons/icon-96.png", "sizes": "96x96" }]
         }
-    ],
-    "handle_links": "preferred",
-    "share_target": {
-        "action": "/share-target/",
-        "method": "GET",
-        "params": {
-            "title": "title",
-            "text": "text",
-            "url": "url"
-        }
-    }
+    ]
 }

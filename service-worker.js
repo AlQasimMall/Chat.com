@@ -1,119 +1,181 @@
-const CACHE_NAME = 'taxi-iraq-cache-v2';
+const CACHE_NAME = 'chat-app-v1';
+const DYNAMIC_CACHE = 'chat-dynamic-v1';
+
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/styles/main.css',
-  '/scripts/main.js',
-  // الصورة الرئيسية للتطبيق
-  'https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527',
-  // الملفات الإضافية المهمة
-  'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.rtl.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css',
-  '/offline.html'
+    './index.html',
+    './manifest.json',
+    './service-worker.js',
+    './offline.html',
+    './icons/icon-72.png',
+    './icons/icon-96.png',
+    './icons/icon-128.png',
+    './icons/icon-144.png',
+    './icons/icon-152.png',
+    './icons/icon-192.png',
+    './icons/icon-384.png',
+    './icons/icon-512.png',
+    'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.rtl.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css'
 ];
 
-// تثبيت Service Worker
-self.addEventListener('install', function(event) {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(function(cache) {
-        console.log('فتح التخزين المؤقت بنجاح');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => self.skipWaiting()) // تخطي مرحلة الانتظار
-  );
+// التثبيت والتخزين المؤقت
+self.addEventListener('install', event => {
+    event.waitUntil(
+        Promise.all([
+            caches.open(CACHE_NAME).then(cache => {
+                console.log('تم فتح التخزين المؤقت');
+                return cache.addAll(urlsToCache);
+            }),
+            self.skipWaiting()
+        ])
+    );
 });
 
-// تنشيط Service Worker وحذف التخزين المؤقت القديم
-self.addEventListener('activate', function(event) {
-  event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME) {
-            console.log('حذف التخزين المؤقت القديم:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+// التنشيط وتحديث التخزين المؤقت
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        Promise.all([
+            // حذف التخزين المؤقت القديم
+            caches.keys().then(cacheNames => {
+                return Promise.all(
+                    cacheNames.filter(cacheName => {
+                        return cacheName.startsWith('chat-') && cacheName !== CACHE_NAME;
+                    }).map(cacheName => {
+                        console.log('حذف التخزين المؤقت القديم:', cacheName);
+                        return caches.delete(cacheName);
+                    })
+                );
+            }),
+            // تنشيط العامل فوراً
+            self.clients.claim()
+        ])
+    );
 });
 
-// التعامل مع طلبات الشبكة
-self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        // إذا وجد في التخزين المؤقت، أعد النسخة المخزنة
-        if (response) {
-          return response;
-        }
+// استراتيجية التخزين المؤقت والشبكة
+self.addEventListener('fetch', event => {
+    // تجاهل طلبات Firebase وAnalytics
+    if (event.request.url.includes('firebase') || 
+        event.request.url.includes('google-analytics') ||
+        event.request.url.includes('chrome-extension')) {
+        return;
+    }
 
-        // إذا لم يوجد، حاول جلبه من الشبكة
-        return fetch(event.request)
-          .then(function(networkResponse) {
-            // تحقق من صحة الاستجابة
-            if (!networkResponse || networkResponse.status !== 200) {
-              return networkResponse;
+    event.respondWith(
+        caches.match(event.request)
+            .then(async response => {
+                // إرجاع النسخة المخزنة إذا وجدت
+                if (response) {
+                    // تحديث التخزين المؤقت في الخلفية
+                    fetch(event.request)
+                        .then(networkResponse => {
+                            if (networkResponse && networkResponse.status === 200) {
+                                caches.open(CACHE_NAME)
+                                    .then(cache => cache.put(event.request, networkResponse));
+                            }
+                        });
+                    return response;
+                }
+
+                try {
+                    const networkResponse = await fetch(event.request);
+                    // تخزين النسخة الجديدة في التخزين المؤقت
+                    if (networkResponse && networkResponse.status === 200) {
+                        const cache = await caches.open(DYNAMIC_CACHE);
+                        cache.put(event.request, networkResponse.clone());
+                    }
+                    return networkResponse;
+                } catch (error) {
+                    // إرجاع صفحة عدم الاتصال في حالة الفشل
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('./offline.html');
+                    }
+                    
+                    // إرجاع صورة احتياطية للصور الفاشلة
+                    if (event.request.destination === 'image') {
+                        return caches.match('./icons/placeholder.png');
+                    }
+
+                    throw error;
+                }
+            })
+    );
+});
+
+// التعامل مع الإشعارات
+self.addEventListener('push', event => {
+    const options = {
+        body: event.data.text(),
+        icon: './icons/icon-192.png',
+        badge: './icons/icon-72.png',
+        vibrate: [100, 50, 100],
+        data: {
+            dateOfArrival: Date.now(),
+            primaryKey: 1
+        },
+        actions: [
+            {
+                action: 'open',
+                title: 'فتح التطبيق',
+                icon: './icons/icon-96.png'
+            },
+            {
+                action: 'close',
+                title: 'إغلاق',
+                icon: './icons/icon-96.png'
             }
+        ]
+    };
 
-            // انسخ الاستجابة قبل تخزينها
-            const responseToCache = networkResponse.clone();
-
-            // احفظ النسخة في التخزين المؤقت
-            caches.open(CACHE_NAME)
-              .then(function(cache) {
-                cache.put(event.request, responseToCache);
-              });
-
-            return networkResponse;
-          })
-          .catch(function() {
-            // إذا فشل الطلب، تحقق مما إذا كان طلب صورة
-            if (event.request.destination === 'image') {
-              return caches.match('https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/driver-images%2F7605a607-6cf8-4b32-aee1-fa7558c98452.png?alt=media&token=5cf9e67c-ba6e-4431-a6a0-79dede15b527');
-            }
-            // إذا كان طلب صفحة، أعد صفحة عدم الاتصال
-            if (event.request.mode === 'navigate') {
-              return caches.match('/offline.html');
-            }
-          });
-      })
-  );
+    event.waitUntil(
+        self.registration.showNotification('تطبيق المحادثة', options)
+    );
 });
 
-// معالجة أحداث التحديث
-self.addEventListener('message', function(event) {
-  if (event.data.action === 'skipWaiting') {
-    self.skipWaiting();
-  }
+// التعامل مع النقر على الإشعارات
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+
+    if (event.action === 'open') {
+        event.waitUntil(
+            clients.openWindow('https://alqasimmall.github.io/Chat.com/')
+        );
+    }
 });
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
-  authDomain: "messageemeapp.firebaseapp.com",
-  databaseURL: "https://messageemeapp-default-rtdb.firebaseio.com",
-  projectId: "messageemeapp",
-  storageBucket: "messageemeapp.appspot.com",
-  messagingSenderId: "255034474844",
-  appId: "1:255034474844:web:5e3b7a6bc4b2fb94cc4199"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-// تهيئة الإشعارات
-const messaging = firebase.messaging();
-messaging.getToken({ vapidKey: 'BI9cpoewcZa1ftyZ_bGjO0GYa4_cT0HNja4YFd6FwLwHg5c0gQ5iSj_MJZRhMxKdgJ0-d-_rEXcpSQ_cx7GqCSc' });
-.then((currentToken) => {
-  if (currentToken) {
-    console.log('Token:', currentToken);
-    // أرسل التوكن إلى السيرفر الخاص بك لتخزينه
-  } else {
-    console.log('No registration token available.');
-  }
-}).catch((err) => {
-  console.error('Error while retrieving token:', err);
+// تحديث Service Worker
+self.addEventListener('message', event => {
+    if (event.data.action === 'skipWaiting') {
+        self.skipWaiting();
+    }
 });
+
+// تهيئة Firebase Messaging
+if ('firebase' in self) {
+    const firebaseConfig = {
+        apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
+        authDomain: "messageemeapp.firebaseapp.com",
+        databaseURL: "https://messageemeapp-default-rtdb.firebaseio.com",
+        projectId: "messageemeapp",
+        storageBucket: "messageemeapp.appspot.com",
+        messagingSenderId: "255034474844",
+        appId: "1:255034474844:web:5e3b7a6bc4b2fb94cc4199"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const messaging = firebase.messaging();
+
+    messaging.setBackgroundMessageHandler(payload => {
+        const title = 'تطبيق المحادثة';
+        const options = {
+            body: payload.data.message,
+            icon: './icons/icon-192.png',
+            badge: './icons/icon-72.png',
+            vibrate: [100, 50, 100]
+        };
+
+        return self.registration.showNotification(title, options);
+    });
+}

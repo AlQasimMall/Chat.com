@@ -1,0 +1,62 @@
+{
+    "manifest.json": {
+        "name": "تطبيق المحادثة",
+        "short_name": "محادثة",
+        "description": "تطبيق محادثة فوري",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#7C4DFF",
+        "theme_color": "#7C4DFF",
+        "orientation": "portrait",
+        "icons": [
+            {
+                "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/profiles%2Fchat.jpg?alt=media&token=7c762f98-fb0f-43d8-83c3-996b6373ff7d",
+                "sizes": "72x72",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/profiles%2Fchat.jpg?alt=media&token=7c762f98-fb0f-43d8-83c3-996b6373ff7d",
+                "sizes": "96x96",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/profiles%2Fchat.jpg?alt=media&token=7c762f98-fb0f-43d8-83c3-996b6373ff7d",
+                "sizes": "128x128",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/profiles%2Fchat.jpg?alt=media&token=7c762f98-fb0f-43d8-83c3-996b6373ff7d",
+                "sizes": "144x144",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/profiles%2Fchat.jpg?alt=media&token=7c762f98-fb0f-43d8-83c3-996b6373ff7d",
+                "sizes": "152x152",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/profiles%2Fchat.jpg?alt=media&token=7c762f98-fb0f-43d8-83c3-996b6373ff7d",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/profiles%2Fchat.jpg?alt=media&token=7c762f98-fb0f-43d8-83c3-996b6373ff7d",
+                "sizes": "384x384",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "https://firebasestorage.googleapis.com/v0/b/messageemeapp.appspot.com/o/profiles%2Fchat.jpg?alt=media&token=7c762f98-fb0f-43d8-83c3-996b6373ff7d",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
+    }
+}

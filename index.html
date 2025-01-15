@@ -1183,6 +1183,88 @@
         font-size: 0.8rem;
     }
 }
+/* منطقة معاينة الملفات */
+.preview-area {
+    padding: 0.5rem;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.preview-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.preview-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.preview-item .preview-file {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+.preview-item .preview-audio {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+}
+
+.remove-file {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255,0,0,0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    border: none;
+}
+
+.file-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
     </style>
 </head>
 <body>
@@ -1403,6 +1485,11 @@
 
     <div class="chat-input">
     <form id="message-form" onsubmit="sendMessage(event)">
+        <!-- منطقة معاينة الملفات المحددة -->
+        <div id="preview-area" class="preview-area" style="display: none;">
+            <div class="preview-files" id="preview-files"></div>
+        </div>
+
         <div class="input-wrapper">
             <!-- أزرار رفع الملفات -->
             <div class="attachment-buttons">
@@ -1418,11 +1505,11 @@
             </div>
             
             <!-- حقول رفع الملفات المخفية -->
-            <input type="file" id="image-upload" accept="image/*" style="display: none" onchange="handleFileUpload(event, 'image')">
-            <input type="file" id="audio-upload" accept="audio/*" style="display: none" onchange="handleFileUpload(event, 'audio')">
-            <input type="file" id="file-upload" accept="*/*" style="display: none" onchange="handleFileUpload(event, 'file')">
+            <input type="file" id="image-upload" accept="image/*" multiple style="display: none" onchange="handleFileSelection(event, 'image')">
+            <input type="file" id="audio-upload" accept="audio/*" multiple style="display: none" onchange="handleFileSelection(event, 'audio')">
+            <input type="file" id="file-upload" accept="*/*" multiple style="display: none" onchange="handleFileSelection(event, 'file')">
             
-            <input type="text" class="message-input" id="message-input" placeholder="اكتب رسالتك هنا..." required>
+            <input type="text" class="message-input" id="message-input" placeholder="اكتب رسالتك هنا...">
             <button type="submit" class="send-button">
                 <i class="fas fa-paper-plane"></i>
             </button>
@@ -3324,6 +3411,253 @@ function formatFileSize(bytes) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// تخزين الملفات المحددة
+let selectedFiles = {
+    images: [],
+    audio: [],
+    files: []
+};
+
+// دالة معالجة اختيار الملفات
+function handleFileSelection(event, type) {
+    const files = Array.from(event.target.files);
+    
+    files.forEach(file => {
+        // إضافة الملف للمصفوفة المناسبة
+        switch(type) {
+            case 'image':
+                selectedFiles.images.push(file);
+                break;
+            case 'audio':
+                selectedFiles.audio.push(file);
+                break;
+            case 'file':
+                selectedFiles.files.push(file);
+                break;
+        }
+    });
+    
+    // تحديث منطقة المعاينة
+    updatePreviewArea();
+}
+
+// دالة تحديث منطقة المعاينة
+function updatePreviewArea() {
+    const previewArea = document.getElementById('preview-area');
+    const previewFiles = document.getElementById('preview-files');
+    
+    // إظهار منطقة المعاينة إذا كان هناك ملفات
+    const hasFiles = selectedFiles.images.length > 0 || 
+                    selectedFiles.audio.length > 0 || 
+                    selectedFiles.files.length > 0;
+    
+    previewArea.style.display = hasFiles ? 'block' : 'none';
+    previewFiles.innerHTML = '';
+    
+    // إضافة معاينات الصور
+    selectedFiles.images.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewItem = createPreviewItem('image', e.target.result, file.name, 'images', index);
+            previewFiles.appendChild(previewItem);
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // إضافة معاينات الملفات الصوتية
+    selectedFiles.audio.forEach((file, index) => {
+        const previewItem = createPreviewItem('audio', URL.createObjectURL(file), file.name, 'audio', index);
+        previewFiles.appendChild(previewItem);
+    });
+    
+    // إضافة معاينات الملفات العامة
+    selectedFiles.files.forEach((file, index) => {
+        const previewItem = createPreviewItem('file', null, file.name, 'files', index);
+        previewFiles.appendChild(previewItem);
+    });
+}
+
+// دالة إنشاء عنصر المعاينة
+function createPreviewItem(type, src, name, arrayType, index) {
+    const div = document.createElement('div');
+    div.className = 'preview-item';
+    
+    switch(type) {
+        case 'image':
+            div.innerHTML = `
+                <img src="${src}" alt="${name}">
+                <span class="file-name">${name}</span>
+            `;
+            break;
+            
+        case 'audio':
+            div.innerHTML = `
+                <div class="preview-audio">
+                    <audio controls>
+                        <source src="${src}" type="audio/mpeg">
+                    </audio>
+                </div>
+                <span class="file-name">${name}</span>
+            `;
+            break;
+            
+        case 'file':
+            div.innerHTML = `
+                <div class="preview-file">
+                    <i class="fas fa-file fa-2x"></i>
+                    <span class="file-name">${name}</span>
+                </div>
+            `;
+            break;
+    }
+    
+    // إضافة زر الحذف
+    const removeButton = document.createElement('button');
+    removeButton.className = 'remove-file';
+    removeButton.innerHTML = '<i class="fas fa-times"></i>';
+    removeButton.onclick = () => removeFile(arrayType, index);
+    
+    div.appendChild(removeButton);
+    return div;
+}
+
+// دالة حذف ملف
+function removeFile(arrayType, index) {
+    selectedFiles[arrayType].splice(index, 1);
+    updatePreviewArea();
+}
+
+// تحديث دالة إرسال الرسالة
+async function sendMessage(event) {
+    event.preventDefault();
+    
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    const hasFiles = selectedFiles.images.length > 0 || 
+                    selectedFiles.audio.length > 0 || 
+                    selectedFiles.files.length > 0;
+    
+    if (!message && !hasFiles) return;
+    
+    try {
+        // عرض مؤشر التحميل
+        if (hasFiles) {
+            Swal.fire({
+                title: 'جاري رفع الملفات...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+        
+        const chatId = getChatId(currentUser.uid, currentChatUser.uid);
+        const messageRef = database.ref(`chats/${chatId}/messages`).push();
+        
+        // رفع الملفات
+        const uploadedFiles = {
+            images: await Promise.all(selectedFiles.images.map(file => uploadFile(file, 'images'))),
+            audio: await Promise.all(selectedFiles.audio.map(file => uploadFile(file, 'audio'))),
+            files: await Promise.all(selectedFiles.files.map(file => uploadFile(file, 'files')))
+        };
+        
+        // إرسال الرسالة مع الملفات
+        await messageRef.set({
+            senderId: currentUser.uid,
+            senderName: currentUser.username,
+            message: message,
+            files: uploadedFiles,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        
+        // تنظيف النموذج
+        messageInput.value = '';
+        selectedFiles = { images: [], audio: [], files: [] };
+        updatePreviewArea();
+        
+        if (hasFiles) {
+            Swal.close();
+        }
+        
+    } catch (error) {
+        console.error('خطأ في إرسال الرسالة:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في إرسال الرسالة',
+            text: error.message
+        });
+    }
+}
+
+// دالة رفع ملف
+async function uploadFile(file, type) {
+    const storageRef = storage.ref();
+    const fileRef = storageRef.child(`chats/${currentUser.uid}/${Date.now()}_${file.name}`);
+    await fileRef.put(file);
+    const url = await fileRef.getDownloadURL();
+    
+    return {
+        name: file.name,
+        url: url,
+        type: type,
+        size: file.size
+    };
+}
+
+// تحديث دالة عرض الرسائل
+function displayMessage(messageData) {
+    // ... الكود السابق ...
+    
+    if (messageData.files) {
+        // عرض الملفات المرفقة
+        if (messageData.files.images.length > 0) {
+            const imagesContainer = document.createElement('div');
+            imagesContainer.className = 'message-images';
+            messageData.files.images.forEach(image => {
+                imagesContainer.innerHTML += `
+                    <img src="${image.url}" alt="${image.name}" class="message-image">
+                `;
+            });
+            content.appendChild(imagesContainer);
+        }
+        
+        if (messageData.files.audio.length > 0) {
+            const audioContainer = document.createElement('div');
+            audioContainer.className = 'message-audio-files';
+            messageData.files.audio.forEach(audio => {
+                audioContainer.innerHTML += `
+                    <audio controls class="message-audio">
+                        <source src="${audio.url}" type="audio/mpeg">
+                    </audio>
+                `;
+            });
+            content.appendChild(audioContainer);
+        }
+        
+        if (messageData.files.files.length > 0) {
+            const filesContainer = document.createElement('div');
+            filesContainer.className = 'message-files';
+            messageData.files.files.forEach(file => {
+                filesContainer.innerHTML += `
+                    <div class="message-file">
+                        <i class="fas fa-file file-icon"></i>
+                        <div class="file-info">
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-size">${formatFileSize(file.size)}</span>
+                        </div>
+                        <a href="${file.url}" target="_blank" class="btn btn-sm btn-primary">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                `;
+            });
+            content.appendChild(filesContainer);
+        }
+    }
+    
+    // ... باقي الكود ...
 }
     // ...existing code...
     

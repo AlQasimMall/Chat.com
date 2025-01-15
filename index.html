@@ -988,6 +988,201 @@
         transform: translateY(0);
     }
 }
+/* تحديث الأنماط الأساسية */
+.input-wrapper {
+    display: flex;
+    gap: 0.3rem; /* تقليل المسافة بين العناصر */
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem; /* تقليل padding */
+    border-radius: 25px; /* تقليل نصف قطر الحواف */
+    border: 1px solid rgba(0,0,0,0.1);
+    margin: 0 auto;
+    max-width: 95%; /* تقليل العرض الأقصى */
+    align-items: center;
+    min-height: 40px; /* تحديد ارتفاع أدنى */
+}
+
+.attachment-buttons {
+    display: flex;
+    gap: 0.3rem; /* تقليل المسافة بين الأزرار */
+}
+
+.attachment-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    width: 28px; /* تقليل حجم الأزرار */
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    font-size: 0.9rem; /* تقليل حجم الأيقونات */
+}
+
+.attachment-btn:hover {
+    background: rgba(124, 77, 255, 0.1);
+}
+
+/* تحديث أنماط الملفات والمرفقات */
+.message-attachment {
+    margin-top: 0.3rem;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.message-image {
+    max-width: 160px; /* تقليل حجم الصور */
+    border-radius: 6px;
+    height: auto;
+}
+
+.message-audio {
+    width: 100%;
+    max-width: 200px; /* تقليل عرض مشغل الصوت */
+    height: 32px; /* تقليل ارتفاع مشغل الصوت */
+}
+
+.message-file {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    max-width: 180px; /* تحديد عرض أقصى لعرض الملفات */
+}
+
+.file-icon {
+    font-size: 1.2rem; /* تقليل حجم أيقونة الملف */
+}
+
+.file-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px; /* تحديد عرض أقصى لاسم الملف */
+}
+
+.file-size {
+    color: #666;
+    font-size: 0.7rem;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 480px) {
+    .input-wrapper {
+        padding: 0.4rem 0.6rem;
+        gap: 0.2rem;
+        min-height: 36px;
+    }
+
+    .attachment-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+    }
+
+    .message-image {
+        max-width: 140px;
+    }
+
+    .message-audio {
+        max-width: 180px;
+        height: 28px;
+    }
+
+    .message-file {
+        padding: 0.3rem;
+        max-width: 160px;
+    }
+
+    .file-icon {
+        font-size: 1rem;
+    }
+
+    .file-name {
+        max-width: 100px;
+    }
+}
+
+/* تحسينات للشاشات المتوسطة */
+@media (min-width: 481px) and (max-width: 768px) {
+    .input-wrapper {
+        padding: 0.45rem 0.7rem;
+        gap: 0.25rem;
+        min-height: 38px;
+    }
+
+    .attachment-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 0.85rem;
+    }
+
+    .message-image {
+        max-width: 150px;
+    }
+
+    .message-audio {
+        max-width: 190px;
+        height: 30px;
+    }
+}
+
+/* تحسينات للشاشات الكبيرة */
+@media (min-width: 769px) {
+    .input-wrapper {
+        max-width: 90%;
+    }
+}
+
+/* تحسينات إضافية للتجربة */
+.message-input {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.5rem;
+    border: none;
+    background: transparent;
+    outline: none;
+}
+
+.send-button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+@media (max-width: 480px) {
+    .send-button {
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+    }
+}
     </style>
 </head>
 <body>
@@ -1207,17 +1402,33 @@
     </div>
 
     <div class="chat-input">
-        <form id="message-form" onsubmit="sendMessage(event)">
-            <div class="input-wrapper">
-                <input type="text" class="message-input" id="message-input" placeholder="اكتب رسالتك هنا..." required>
-                <button type="submit" class="send-button">
-                    <i class="fas fa-paper-plane"></i>
+    <form id="message-form" onsubmit="sendMessage(event)">
+        <div class="input-wrapper">
+            <!-- أزرار رفع الملفات -->
+            <div class="attachment-buttons">
+                <button type="button" class="attachment-btn" onclick="document.getElementById('image-upload').click()">
+                    <i class="fas fa-image"></i>
+                </button>
+                <button type="button" class="attachment-btn" onclick="document.getElementById('audio-upload').click()">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button type="button" class="attachment-btn" onclick="document.getElementById('file-upload').click()">
+                    <i class="fas fa-paperclip"></i>
                 </button>
             </div>
-        </form>
-    </div>
+            
+            <!-- حقول رفع الملفات المخفية -->
+            <input type="file" id="image-upload" accept="image/*" style="display: none" onchange="handleFileUpload(event, 'image')">
+            <input type="file" id="audio-upload" accept="audio/*" style="display: none" onchange="handleFileUpload(event, 'audio')">
+            <input type="file" id="file-upload" accept="*/*" style="display: none" onchange="handleFileUpload(event, 'file')">
+            
+            <input type="text" class="message-input" id="message-input" placeholder="اكتب رسالتك هنا..." required>
+            <button type="submit" class="send-button">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </form>
 </div>
-    
 
     <!-- المكتبات المطلوبة -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
@@ -2792,21 +3003,30 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// تحديث دالة toggleUserMenu لتعمل في كلا الواجهتين
 function toggleUserMenu(event) {
     event.preventDefault();
     event.stopPropagation();
     
-    const dropdown = document.querySelector('.menu-dropdown');
+    // تحديد القائمة المنسدلة القريبة من الزر الذي تم النقر عليه
+    const button = event.currentTarget;
+    const dropdown = button.nextElementSibling;
     const isVisible = dropdown.style.display === 'block';
+    
+    // إغلاق جميع القوائم المنسدلة المفتوحة
+    document.querySelectorAll('.menu-dropdown').forEach(menu => {
+        menu.style.display = 'none';
+    });
     
     if (isVisible) {
         dropdown.style.display = 'none';
         return;
     }
     
-    const username = document.querySelector('.menu-username');
-    const email = document.querySelector('.menu-email');
-    const avatar = document.querySelector('.menu-avatar');
+    // تحديث معلومات المستخدم في القائمة
+    const username = dropdown.querySelector('.menu-username');
+    const email = dropdown.querySelector('.menu-email');
+    const avatar = dropdown.querySelector('.menu-avatar');
     
     if (currentUser) {
         username.textContent = currentUser.username;
@@ -2816,14 +3036,43 @@ function toggleUserMenu(event) {
     
     dropdown.style.display = 'block';
     updateFriendRequestCount();
+    
+    // تحديد موقع القائمة المنسدلة
+    const rect = button.getBoundingClientRect();
+    dropdown.style.top = `${rect.bottom + 5}px`;
+    dropdown.style.right = `${window.innerWidth - rect.right}px`;
 }
 
-// دالة معالجة النقر على عناصر القائمة
+// تحديث مستمع النقر خارج القوائم
+document.addEventListener('click', (event) => {
+    const dropdowns = document.querySelectorAll('.menu-dropdown');
+    const triggers = document.querySelectorAll('.menu-trigger');
+    
+    let clickedOnTrigger = false;
+    triggers.forEach(trigger => {
+        if (trigger.contains(event.target)) {
+            clickedOnTrigger = true;
+        }
+    });
+    
+    if (!clickedOnTrigger) {
+        dropdowns.forEach(dropdown => {
+            if (!dropdown.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+});
+
+// تحديث دالة معالجة النقر على عناصر القائمة
 function handleMenuClick(action, event) {
     event.preventDefault();
     event.stopPropagation();
     
-    const dropdown = document.querySelector('.menu-dropdown');
+    // إغلاق جميع القوائم المنسدلة
+    document.querySelectorAll('.menu-dropdown').forEach(dropdown => {
+        dropdown.style.display = 'none';
+    });
     
     switch (action) {
         case 'home':
@@ -2832,43 +3081,52 @@ function handleMenuClick(action, event) {
         case 'requests':
             showFriendRequests();
             break;
+        case 'account':
+            showAddAccount();
+            break;
         case 'logout':
             if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
                 logout();
             }
             break;
     }
-    
-    dropdown.style.display = 'none';
 }
 
-// مستمع لإغلاق القائمة عند النقر خارجها
-document.addEventListener('click', (event) => {
-    const dropdown = document.querySelector('.menu-dropdown');
-    const trigger = document.querySelector('.menu-trigger');
-    
-    if (!dropdown || !trigger) return;
-    
-    if (!dropdown.contains(event.target) && !trigger.contains(event.target)) {
-        dropdown.style.display = 'none';
+// إضافة أنماط CSS إضافية للقوائم المنسدلة
+const additionalStyles = `
+    .menu-dropdown {
+        position: fixed;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        width: 280px;
+        z-index: 1000;
+        animation: slideDown 0.2s ease;
     }
-});
 
-// تحديث عدد طلبات الصداقة
-async function updateFriendRequestCount() {
-    const badge = document.getElementById('requests-badge');
-    if (!badge) return;
-    
-    try {
-        const requests = await loadFriendRequests();
-        const count = requests.length;
-        
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
-    } catch (error) {
-        console.error('خطأ في تحديث عدد طلبات الصداقة:', error);
+    .menu-trigger {
+        background: transparent;
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
     }
-}
+
+    .menu-trigger:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+`;
+
+// إضافة الأنماط الجديدة إلى الصفحة
+const styleSheet = document.createElement('style');
+styleSheet.textContent = additionalStyles;
+document.head.appendChild(styleSheet);
 
 // دالة معالجة النقر على عناصر القائمة
 function handleMenuClick(action, event) {
@@ -2935,7 +3193,141 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeUI() {
     updateFriendRequestCount();
 }
+
+// دالة معالجة رفع الملفات
+async function handleFileUpload(event, type) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        // عرض مؤشر التحميل
+        Swal.fire({
+            title: 'جاري رفع الملف...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // رفع الملف إلى Firebase Storage
+        const storageRef = storage.ref();
+        const fileRef = storageRef.child(`chats/${currentUser.uid}/${Date.now()}_${file.name}`);
+        await fileRef.put(file);
+        const fileUrl = await fileRef.getDownloadURL();
+
+        // إرسال الرسالة مع الملف
+        const chatId = getChatId(currentUser.uid, currentChatUser.uid);
+        await database.ref(`chats/${chatId}/messages`).push({
+            senderId: currentUser.uid,
+            senderName: currentUser.username,
+            type: type,
+            fileUrl: fileUrl,
+            fileName: file.name,
+            fileSize: file.size,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        // إغلاق مؤشر التحميل
+        Swal.close();
+    } catch (error) {
+        console.error('خطأ في رفع الملف:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في رفع الملف',
+            text: error.message
+        });
+    }
+
+    // تفريغ حقل الملف
+    event.target.value = '';
+}
+
+// تحديث دالة عرض الرسائل
+function displayMessage(messageData) {
+    const messagesContainer = document.getElementById('messages-container');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    
+    const isSender = messageData.senderId === currentUser.uid;
+    messageElement.classList.add(isSender ? 'message-sent' : 'message-received');
+    
+    // إضافة معلومات المرسل للرسائل المستلمة
+    if (!isSender) {
+        const userInfo = document.createElement('div');
+        userInfo.className = 'd-flex align-items-center gap-2 mb-1';
+        userInfo.innerHTML = `
+            <img src="${currentChatUser.avatarUrl}" class="user-avatar" style="width: 30px; height: 30px;">
+            <small class="text-muted">${messageData.senderName}</small>
+        `;
+        messageElement.appendChild(userInfo);
+    }
+
+    // إضافة محتوى الرسالة حسب نوعها
+    const content = document.createElement('div');
+    content.className = 'message-content';
+
+    switch (messageData.type) {
+        case 'image':
+            content.innerHTML = `
+                <img src="${messageData.fileUrl}" alt="صورة" class="message-image">
+            `;
+            break;
+            
+        case 'audio':
+            content.innerHTML = `
+                <audio class="message-audio" controls>
+                    <source src="${messageData.fileUrl}" type="audio/mpeg">
+                    متصفحك لا يدعم تشغيل الملفات الصوتية
+                </audio>
+            `;
+            break;
+            
+        case 'file':
+            content.innerHTML = `
+                <div class="message-file">
+                    <i class="fas fa-file file-icon"></i>
+                    <div class="file-info">
+                        <span class="file-name">${messageData.fileName}</span>
+                        <span class="file-size">${formatFileSize(messageData.fileSize)}</span>
+                    </div>
+                    <a href="${messageData.fileUrl}" target="_blank" class="btn btn-sm btn-primary">
+                        <i class="fas fa-download"></i>
+                    </a>
+                </div>
+            `;
+            break;
+            
+        default:
+            content.textContent = messageData.message;
+    }
+    
+    messageElement.appendChild(content);
+
+    // إضافة التوقيت
+    const timestamp = document.createElement('div');
+    timestamp.className = 'message-time small text-muted mt-1';
+    const messageDate = new Date(messageData.timestamp);
+    timestamp.textContent = messageDate.toLocaleTimeString('ar-EG', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    messageElement.appendChild(timestamp);
+
+    messagesContainer.appendChild(messageElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// دالة تنسيق حجم الملف
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
     // ...existing code...
+    
+    drop
 </script>
 </body>
 </html>

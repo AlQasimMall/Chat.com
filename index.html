@@ -1265,6 +1265,110 @@
     overflow: hidden;
     white-space: nowrap;
 }
+
+/* أنماط عرض الملفات في المحادثة */
+.message-attachments {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.message-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.message-image {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.message-image:hover {
+    transform: scale(1.05);
+}
+
+.message-audio {
+    max-width: 250px;
+    height: 40px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.message-file {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    max-width: 250px;
+    gap: 0.5rem;
+}
+
+.file-icon {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.download-btn {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.download-btn:hover {
+    background: var(--secondary-color);
+}
+
+/* تحسينات لعرض الملفات في الرسائل المرسلة */
+.message-sent .message-file {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.message-sent .file-name,
+.message-sent .file-size {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.message-sent .file-icon {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.message-sent .download-btn {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.message-sent .download-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
     </style>
 </head>
 <body>
@@ -3659,7 +3763,137 @@ function displayMessage(messageData) {
     
     // ... باقي الكود ...
 }
-    // ...existing code...
+   
+    function displayMessage(messageData) {
+    const messagesContainer = document.getElementById('messages-container');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    
+    const isSender = messageData.senderId === currentUser.uid;
+    messageElement.classList.add(isSender ? 'message-sent' : 'message-received');
+    
+    // إضافة صورة المرسل للرسائل المستلمة
+    if (!isSender) {
+        const avatarContainer = document.createElement('div');
+        avatarContainer.className = 'd-flex align-items-start mb-1';
+        
+        const avatar = document.createElement('img');
+        avatar.src = currentChatUser.avatarUrl;
+        avatar.className = 'user-avatar me-2';
+        avatar.style.width = '30px';
+        avatar.style.height = '30px';
+        avatarContainer.appendChild(avatar);
+        
+        messageElement.appendChild(avatarContainer);
+    }
+
+    // إضافة محتوى الرسالة
+    if (messageData.message) {
+        const textContent = document.createElement('div');
+        textContent.className = 'message-text';
+        textContent.textContent = messageData.message;
+        messageElement.appendChild(textContent);
+    }
+
+    // إضافة الملفات المرفقة
+    if (messageData.files) {
+        const attachmentsContainer = document.createElement('div');
+        attachmentsContainer.className = 'message-attachments';
+
+        // عرض الصور
+        if (messageData.files.images && messageData.files.images.length > 0) {
+            const imagesContainer = document.createElement('div');
+            imagesContainer.className = 'message-images';
+            
+            messageData.files.images.forEach(image => {
+                const imgElement = document.createElement('img');
+                imgElement.src = image.url;
+                imgElement.alt = image.name;
+                imgElement.className = 'message-image';
+                imgElement.onclick = () => openImageViewer(image.url);
+                imagesContainer.appendChild(imgElement);
+            });
+            
+            attachmentsContainer.appendChild(imagesContainer);
+        }
+
+        // عرض الملفات الصوتية
+        if (messageData.files.audio && messageData.files.audio.length > 0) {
+            messageData.files.audio.forEach(audio => {
+                const audioContainer = document.createElement('div');
+                audioContainer.className = 'audio-container';
+                audioContainer.innerHTML = `
+                    <audio class="message-audio" controls>
+                        <source src="${audio.url}" type="audio/mpeg">
+                        متصفحك لا يدعم تشغيل الملفات الصوتية
+                    </audio>
+                `;
+                attachmentsContainer.appendChild(audioContainer);
+            });
+        }
+
+        // عرض الملفات العامة
+        if (messageData.files.files && messageData.files.files.length > 0) {
+            messageData.files.files.forEach(file => {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'message-file';
+                fileElement.innerHTML = `
+                    <i class="fas fa-file file-icon"></i>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                    <a href="${file.url}" target="_blank" class="download-btn">
+                        <i class="fas fa-download"></i>
+                    </a>
+                `;
+                attachmentsContainer.appendChild(fileElement);
+            });
+        }
+
+        messageElement.appendChild(attachmentsContainer);
+    }
+
+    // إضافة التوقيت
+    const timestamp = document.createElement('div');
+    timestamp.className = 'message-time small text-muted mt-1';
+    const messageDate = new Date(messageData.timestamp);
+    timestamp.textContent = messageDate.toLocaleTimeString('ar-EG', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    messageElement.appendChild(timestamp);
+
+    messagesContainer.appendChild(messageElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// دالة لعرض الصور في عارض كامل الشاشة
+function openImageViewer(imageUrl) {
+    Swal.fire({
+        imageUrl: imageUrl,
+        imageAlt: 'صورة مرفقة',
+        width: '80%',
+        padding: '3em',
+        showConfirmButton: false,
+        showCloseButton: true,
+        background: '#000000dd',
+        backdrop: `
+            rgba(0,0,0,0.9)
+            center
+            no-repeat
+        `
+    });
+}
+
+// دالة تنسيق حجم الملف
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+} // ...existing code...
     
     drop
 </script>

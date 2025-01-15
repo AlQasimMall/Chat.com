@@ -734,13 +734,160 @@
 
 .chat-input {
     background: white;
-    padding: 0.5rem;  /* تقليل الـ padding من 1rem إلى 0.5rem */
+    padding: 0.5rem;  /* تقليل الـ padding */
     border-top: 1px solid rgba(0,0,0,0.1);
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 10;
+}
+
+.input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    padding: 0.75rem;  /* تقليل الـ padding */
+    border-radius: 20px;
+    border: 1px solid rgba(0,0,0,0.1);
+    margin: 0 auto;
+    max-width: 98%;
+}
+
+.message-input-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-area {
+    margin-bottom: 0.5rem;
+    max-height: 100px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    background: rgba(0,0,0,0.03);
+    border-radius: 10px;
+}
+
+.selected-files-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.selected-file-preview {
+    position: relative;
+    max-width: 80px;
+}
+
+.preview-inner {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.05);
+}
+
+.selected-file-preview img {
+    max-height: 60px;
+    max-width: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.remove-preview {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.audio-preview,
+.file-preview {
+    padding: 0.25rem 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    min-width: 120px;
+}
+
+.audio-preview i,
+.file-preview i {
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+.audio-preview span,
+.file-preview span {
+    font-size: 0.8rem;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
+
+.message-input {
+    border: none;
+    padding: 0.5rem;
+    font-size: 1rem;
+    background: transparent;
+    outline: none;
+    width: 100%;
+}
+
+.attachment-buttons {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
+}
+
+.attachment-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.attachment-btn:hover {
+    background: rgba(124, 77, 255, 0.1);
+}
+
+.send-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.send-button:hover {
+    background: var(--secondary-color);
+    transform: translateY(-1px);
 }
 
 .input-wrapper {
@@ -1183,136 +1330,320 @@
         font-size: 0.8rem;
     }
 }
-/* منطقة معاينة الملفات */
 .preview-area {
-    padding: 0.5rem;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.95);
     border-top: 1px solid rgba(0,0,0,0.1);
-    margin-bottom: 0.5rem;
+    padding: 0.5rem;
     max-height: 200px;
     overflow-y: auto;
 }
 
-.preview-files {
+.selected-files-container {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
 }
 
-.preview-item {
+.file-preview {
     position: relative;
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 8px;
     overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.1);
+    background: #f0f0f0;
 }
 
-.preview-item img {
+.file-preview img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.preview-item .preview-file {
+.file-preview .file-icon {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8f9fa;
-    padding: 0.5rem;
-    text-align: center;
-    font-size: 0.8rem;
+    font-size: 2rem;
+    color: var(--primary-color);
 }
 
-.preview-item .preview-audio {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-}
-
-.remove-file {
+.file-preview .remove-file {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: 5px;
+    right: 5px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: rgba(255,0,0,0.8);
-    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 12px;
-    border: none;
 }
 
-.file-name {
+.file-preview .file-name {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     background: rgba(0,0,0,0.5);
     color: white;
-    font-size: 0.7rem;
-    padding: 2px 4px;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    padding: 2px 5px;
+    font-size: 0.8rem;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* أنماط عرض الملفات في المحادثة */
 .message-attachments {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.message-images {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    margin-top: 0.5rem;
 }
 
 .message-image {
     max-width: 200px;
     max-height: 200px;
     border-radius: 8px;
-    object-fit: cover;
     cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.message-image:hover {
-    transform: scale(1.05);
 }
 
 .message-audio {
-    max-width: 250px;
-    height: 40px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: 300px;
 }
 
 .message-file {
     display: flex;
     align-items: center;
     padding: 0.5rem;
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0,0,0,0.05);
     border-radius: 8px;
-    max-width: 250px;
     gap: 0.5rem;
 }
 
-.file-icon {
+.message-file .file-icon {
     font-size: 1.5rem;
+}
+
+.message-file .file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.message-file .file-name {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-file .file-size {
+    font-size: 0.8rem;
+    color: #666;
+}
+// إضافة الأنماط CSS الجديدة
+const newStyles = `
+.input-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 20px;
+    align-items: center;
+}
+
+.selected-file-preview {
+    position: relative;
+    margin: 0.25rem;
+}
+
+.preview-inner {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.05);
+}
+
+.selected-file-preview img {
+    max-height: 100px;
+    max-width: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.remove-preview {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.audio-preview,
+.file-preview {
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+}
+
+.audio-preview i,
+.file-preview i {
+    font-size: 1.2rem;
     color: var(--primary-color);
+}
+
+.audio-preview span,
+.file-preview span {
+    font-size: 0.8rem;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+/* تنسيق عرض الملفات في المحادثة */
+.message-attachment {
+    margin-top: 0.5rem;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 300px;
+}
+
+.message-image {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.message-audio {
+    width: 100%;
+    background: rgba(0,0,0,0.05);
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.message-file {
+    background: rgba(0,0,0,0.05);
+    padding: 0.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+// إضافة الأنماط الجديدة
+const messageStyles = `
+.message-content-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 100%;
+}
+
+.message-text {
+    margin-bottom: 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.attachment-preview {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.image-preview {
+    cursor: pointer;
+    max-width: 300px;
+    max-height: 300px;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.attachment-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.image-preview:hover .attachment-overlay {
+    opacity: 1;
+}
+
+.attachment-overlay i {
+    color: white;
+    font-size: 24px;
+}
+
+.audio-container {
+    background: rgba(0,0,0,0.05);
+    padding: 8px;
+    border-radius: 8px;
+    width: 250px;
+}
+
+.audio-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.audio-name {
+    font-size: 14px;
+    color: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+audio {
+    width: 100%;
+    height: 36px;
+}
+
+.file-container {
+    background: rgba(0,0,0,0.05);
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 250px;
 }
 
 .file-info {
@@ -1321,54 +1652,374 @@
 }
 
 .file-name {
-    font-size: 0.9rem;
-    font-weight: 500;
+    display: block;
+    font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .file-size {
-    font-size: 0.8rem;
-    color: #666;
+    display: block;
+    font-size: 12px;
+    color: rgba(0,0,0,0.5);
 }
 
-.download-btn {
-    padding: 4px 8px;
-    border-radius: 4px;
+.download-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     background: var(--primary-color);
     color: white;
-    border: none;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
 }
 
-.download-btn:hover {
+.download-button:hover {
+    background-color: var(--secondary-color);
+}
+
+.message-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: rgba(0,0,0,0.5);
+    margin-top: 4px;
+}
+
+.message-status {
+    font-size: 12px;
+    color: var(--primary-color);
+}
+
+.media-preview-container {
+    background: rgba(0,0,0,0.9) !important;
+    padding: 0 !important;
+}
+
+.media-preview-image {
+    max-height: 90vh !important;
+    object-fit: contain !important;
+}
+
+/* تنسيقات عامة للمرفقات */
+.message-content-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 100%;
+}
+
+.message-text {
+    margin-bottom: 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.message-attachment {
+    margin-top: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* تنسيقات الصور */
+.image-preview {
+    position: relative;
+    cursor: pointer;
+    max-width: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.message-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.attachment-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.image-preview:hover .attachment-overlay {
+    opacity: 1;
+}
+
+.attachment-overlay i {
+    color: white;
+    font-size: 24px;
+}
+
+/* تنسيقات الملفات الصوتية */
+.audio-container {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    width: 250px;
+}
+
+.audio-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.audio-name {
+    font-size: 14px;
+    color: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-audio {
+    width: 100%;
+    height: 36px;
+}
+
+/* تنسيقات الملفات العامة */
+.file-container {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 250px;
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    display: block;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    display: block;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.download-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.download-button:hover {
+    background-color: var(--secondary-color);
+}
+
+/* تنسيقات تذييل الرسالة */
+.message-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.5);
+    margin-top: 4px;
+}
+
+.message-status {
+    font-size: 12px;
+    color: var(--primary-color);
+}
+
+/* تنسيقات نافذة معاينة الوسائط */
+.media-preview-container {
+    background: rgba(0, 0, 0, 0.9) !important;
+    padding: 0 !important;
+}
+
+.media-preview-image {
+    max-height: 90vh !important;
+    object-fit: contain !important;
+}
+/* تحديث أنماط الرسائل والمرفقات */
+.message {
+    max-width: 75%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 12px;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.message-sent {
+    background: var(--primary-color);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+}
+
+.message-received {
+    background: white;
+    color: black;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.message-text {
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.attachment-preview {
+    margin-top: 5px;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 300px;
+}
+
+.message-image {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.message-image:hover {
+    transform: scale(1.02);
+}
+
+.message-audio-wrapper {
+    margin-top: 5px;
+    background: rgba(255,255,255,0.1);
+    padding: 8px;
+    border-radius: 8px;
+    width: 250px;
+}
+
+.message-received .message-audio-wrapper {
+    background: rgba(0,0,0,0.05);
+}
+
+.message-audio {
+    width: 100%;
+    height: 36px;
+}
+
+.audio-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.message-file-wrapper {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    width: 250px;
+}
+
+.message-received .message-file-wrapper {
+    background: rgba(0,0,0,0.05);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100% - 40px);
+}
+
+.file-info i {
+    font-size: 20px;
+}
+
+.file-info span {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-info small {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.file-download {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.message-received .file-download {
+    background: var(--primary-color);
+    color: white;
+}
+
+.file-download:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.message-received .file-download:hover {
     background: var(--secondary-color);
 }
 
-/* تحسينات لعرض الملفات في الرسائل المرسلة */
-.message-sent .message-file {
-    background: rgba(255, 255, 255, 0.1);
+.message-time {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 5px;
+    text-align: right;
 }
 
-.message-sent .file-name,
-.message-sent .file-size {
-    color: rgba(255, 255, 255, 0.9);
+/* أنماط عرض الصورة في وضع ملء الشاشة */
+.full-image-container {
+    background: rgba(0, 0, 0, 0.9) !important;
 }
 
-.message-sent .file-icon {
-    color: rgba(255, 255, 255, 0.9);
+.full-image {
+    max-height: 90vh !important;
+    max-width: 90vw !important;
+    object-fit: contain !important;
 }
 
-.message-sent .download-btn {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.message-sent .download-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
     </style>
 </head>
 <body>
@@ -1589,13 +2240,18 @@
 
     <div class="chat-input">
     <form id="message-form" onsubmit="sendMessage(event)">
-        <!-- منطقة معاينة الملفات المحددة -->
-        <div id="preview-area" class="preview-area" style="display: none;">
-            <div class="preview-files" id="preview-files"></div>
-        </div>
-
         <div class="input-wrapper">
-            <!-- أزرار رفع الملفات -->
+            <div class="message-input-container">
+                <!-- منطقة معاينة الملفات -->
+                <div class="preview-area" id="file-preview-area" style="display: none;">
+                    <div class="selected-files-container" id="selected-files-container"></div>
+                </div>
+                
+                <!-- حقل إدخال الرسالة -->
+                <input type="text" class="message-input" id="message-input" placeholder="اكتب رسالتك هنا...">
+            </div>
+            
+            <!-- أزرار المرفقات -->
             <div class="attachment-buttons">
                 <button type="button" class="attachment-btn" onclick="document.getElementById('image-upload').click()">
                     <i class="fas fa-image"></i>
@@ -1606,17 +2262,15 @@
                 <button type="button" class="attachment-btn" onclick="document.getElementById('file-upload').click()">
                     <i class="fas fa-paperclip"></i>
                 </button>
+                <button type="submit" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
             
             <!-- حقول رفع الملفات المخفية -->
             <input type="file" id="image-upload" accept="image/*" multiple style="display: none" onchange="handleFileSelection(event, 'image')">
             <input type="file" id="audio-upload" accept="audio/*" multiple style="display: none" onchange="handleFileSelection(event, 'audio')">
             <input type="file" id="file-upload" accept="*/*" multiple style="display: none" onchange="handleFileSelection(event, 'file')">
-            
-            <input type="text" class="message-input" id="message-input" placeholder="اكتب رسالتك هنا...">
-            <button type="submit" class="send-button">
-                <i class="fas fa-paper-plane"></i>
-            </button>
         </div>
     </form>
 </div>
@@ -2264,6 +2918,7 @@ function loadMessages(chatId) {
 }
 
 // دالة عرض الرسالة
+// تحديث دالة عرض الرسائل لدعم المرفقات
 function displayMessage(messageData) {
     const messagesContainer = document.getElementById('messages-container');
     const messageElement = document.createElement('div');
@@ -2272,51 +2927,188 @@ function displayMessage(messageData) {
     const isSender = messageData.senderId === currentUser.uid;
     messageElement.classList.add(isSender ? 'message-sent' : 'message-received');
     
-    // إضافة صورة المرسل للرسائل المستلمة
-    if (!isSender) {
-        const avatarContainer = document.createElement('div');
-        avatarContainer.className = 'd-flex align-items-start mb-1';
-        
-        const avatar = document.createElement('img');
-        avatar.src = currentChatUser.avatarUrl;
-        avatar.className = 'user-avatar me-2';
-        avatar.style.width = '30px';
-        avatar.style.height = '30px';
-        avatarContainer.appendChild(avatar);
-        
-        messageElement.appendChild(avatarContainer);
+    // إنشاء حاوية المحتوى
+    const contentContainer = document.createElement('div');
+    contentContainer.className = 'message-content-container';
+    
+    // إضافة نص الرسالة إذا وجد
+    if (messageData.message) {
+        const messageText = document.createElement('div');
+        messageText.className = 'message-text';
+        messageText.textContent = messageData.message;
+        contentContainer.appendChild(messageText);
     }
     
-    const messageContent = document.createElement('div');
-    messageContent.classList.add('message-content');
-    messageContent.textContent = messageData.message;
-    messageElement.appendChild(messageContent);
+    // إضافة المرفقات إذا وجدت
+    if (messageData.attachments && messageData.attachments.length > 0) {
+        messageData.attachments.forEach(attachment => {
+            const attachmentElement = document.createElement('div');
+            attachmentElement.className = 'message-attachment';
+            
+            switch (attachment.type) {
+                case 'image':
+                    attachmentElement.innerHTML = `
+                        <div class="attachment-preview image-preview" onclick="showMediaPreview('${attachment.url}', 'image')">
+                            <img src="${attachment.url}" alt="${attachment.name}" class="message-image">
+                            <div class="attachment-overlay">
+                                <i class="fas fa-search-plus"></i>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'audio':
+                    attachmentElement.innerHTML = `
+                        <div class="audio-container">
+                            <div class="audio-info">
+                                <i class="fas fa-music"></i>
+                                <span class="audio-name">${attachment.name}</span>
+                            </div>
+                            <audio controls class="message-audio">
+                                <source src="${attachment.url}" type="audio/mpeg">
+                            </audio>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'file':
+                    attachmentElement.innerHTML = `
+                        <div class="file-container">
+                            <i class="fas fa-file"></i>
+                            <div class="file-info">
+                                <span class="file-name">${attachment.name}</span>
+                                <span class="file-size">${formatFileSize(attachment.size)}</span>
+                            </div>
+                            <a href="${attachment.url}" download="${attachment.name}" class="download-button">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            contentContainer.appendChild(attachmentElement);
+        });
+    }
+
+    // إضافة معلومات الوقت والحالة
+    const messageFooter = document.createElement('div');
+    messageFooter.className = 'message-footer';
+    messageFooter.innerHTML = `
+        <span class="message-time">${formatMessageTime(messageData.timestamp)}</span>
+        ${isSender ? '<i class="fas fa-check-double message-status"></i>' : ''}
+    `;
+    contentContainer.appendChild(messageFooter);
     
-    const timestamp = document.createElement('div');
-    timestamp.classList.add('message-time', 'small', 'text-muted', 'mt-1');
-    const messageDate = new Date(messageData.timestamp);
-    timestamp.textContent = messageDate.toLocaleTimeString('ar-EG', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    messageElement.appendChild(timestamp);
-    
+    messageElement.appendChild(contentContainer);
     messagesContainer.appendChild(messageElement);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// تحديث كود معالجة زر الرجوع
-window.addEventListener('popstate', (event) => {
-    if (document.getElementById('chat-container').style.display === 'block') {
-        showUsersList();
-    } else if (document.getElementById('users-container').style.display === 'block') {
-        if (confirm('هل تريد تسجيل الخروج؟')) {
-            logout();
-        } else {
-            window.history.pushState({ page: 'users' }, '');
-        }
+// دالة عرض الوسائط في نافذة منبثقة
+function showMediaPreview(url, type) {
+    if (type === 'image') {
+        Swal.fire({
+            imageUrl: url,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                container: 'media-preview-container',
+                image: 'media-preview-image'
+            },
+            background: 'rgba(0,0,0,0.9)',
+            width: '100%',
+            padding: 0,
+            heightAuto: false
+        });
     }
-});
+}
+
+// دالة تنسيق حجم الملف
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// دالة تنسيق وقت الرسالة
+function formatMessageTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+        return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+        return 'أمس';
+    } else {
+        return date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+    }
+}
+
+// تحديث دالة إرسال الرسالة
+async function sendMessage(event) {
+    event.preventDefault();
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    const selectedFiles = Array.from(document.querySelectorAll('.selected-file-preview'));
+    
+    if (!message && selectedFiles.length === 0) return;
+    
+    try {
+        Swal.fire({
+            title: 'جاري الإرسال...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const chatId = getChatId(currentUser.uid, currentChatUser.uid);
+        const messageData = {
+            senderId: currentUser.uid,
+            senderName: currentUser.username,
+            message: message,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            attachments: []
+        };
+
+        // رفع الملفات المرفقة
+        for (const filePreview of selectedFiles) {
+            const file = filePreview.file;
+            const type = filePreview.dataset.type;
+            const fileRef = storage.ref(`chats/${currentUser.uid}/${Date.now()}_${file.name}`);
+            
+            await fileRef.put(file);
+            const url = await fileRef.getDownloadURL();
+            
+            messageData.attachments.push({
+                type: type,
+                url: url,
+                name: file.name,
+                size: file.size
+            });
+        }
+
+        // إرسال الرسالة
+        await database.ref(`chats/${chatId}/messages`).push(messageData);
+        
+        // تنظيف الحقول
+        messageInput.value = '';
+        selectedFiles.forEach(preview => preview.remove());
+        
+        Swal.close();
+    } catch (error) {
+        console.error('خطأ في إرسال الرسالة:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في الإرسال',
+            text: error.message
+        });
+    }
+}
     // Load messages
     function loadMessages() {
         const messagesContainer = document.getElementById('messages-container');
@@ -3442,72 +4234,126 @@ function displayMessage(messageData) {
     const isSender = messageData.senderId === currentUser.uid;
     messageElement.classList.add(isSender ? 'message-sent' : 'message-received');
     
-    // إضافة معلومات المرسل للرسائل المستلمة
-    if (!isSender) {
-        const userInfo = document.createElement('div');
-        userInfo.className = 'd-flex align-items-center gap-2 mb-1';
-        userInfo.innerHTML = `
-            <img src="${currentChatUser.avatarUrl}" class="user-avatar" style="width: 30px; height: 30px;">
-            <small class="text-muted">${messageData.senderName}</small>
-        `;
-        messageElement.appendChild(userInfo);
-    }
-
-    // إضافة محتوى الرسالة حسب نوعها
-    const content = document.createElement('div');
-    content.className = 'message-content';
-
-    switch (messageData.type) {
-        case 'image':
-            content.innerHTML = `
-                <img src="${messageData.fileUrl}" alt="صورة" class="message-image">
-            `;
-            break;
-            
-        case 'audio':
-            content.innerHTML = `
-                <audio class="message-audio" controls>
-                    <source src="${messageData.fileUrl}" type="audio/mpeg">
-                    متصفحك لا يدعم تشغيل الملفات الصوتية
-                </audio>
-            `;
-            break;
-            
-        case 'file':
-            content.innerHTML = `
-                <div class="message-file">
-                    <i class="fas fa-file file-icon"></i>
-                    <div class="file-info">
-                        <span class="file-name">${messageData.fileName}</span>
-                        <span class="file-size">${formatFileSize(messageData.fileSize)}</span>
-                    </div>
-                    <a href="${messageData.fileUrl}" target="_blank" class="btn btn-sm btn-primary">
-                        <i class="fas fa-download"></i>
-                    </a>
-                </div>
-            `;
-            break;
-            
-        default:
-            content.textContent = messageData.message;
+    // إضافة حاوية المحتوى
+    const contentContainer = document.createElement('div');
+    contentContainer.className = 'message-content-container';
+    
+    // إضافة نص الرسالة إذا وجد
+    if (messageData.message) {
+        const messageText = document.createElement('div');
+        messageText.className = 'message-text';
+        messageText.textContent = messageData.message;
+        contentContainer.appendChild(messageText);
     }
     
-    messageElement.appendChild(content);
+    // إضافة المرفقات إذا وجدت
+    if (messageData.attachments && messageData.attachments.length > 0) {
+        messageData.attachments.forEach(attachment => {
+            const attachmentElement = document.createElement('div');
+            attachmentElement.className = 'message-attachment';
+            
+            switch (attachment.type) {
+                case 'image':
+                    attachmentElement.innerHTML = `
+                        <div class="attachment-preview image-preview" onclick="showMediaPreview('${attachment.url}', 'image')">
+                            <img src="${attachment.url}" alt="${attachment.name}">
+                            <div class="attachment-overlay">
+                                <i class="fas fa-search-plus"></i>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'audio':
+                    attachmentElement.innerHTML = `
+                        <div class="attachment-preview audio-preview">
+                            <div class="audio-container">
+                                <div class="audio-info">
+                                    <i class="fas fa-music"></i>
+                                    <span class="audio-name">${attachment.name}</span>
+                                </div>
+                                <audio controls>
+                                    <source src="${attachment.url}" type="audio/mpeg">
+                                </audio>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'file':
+                    attachmentElement.innerHTML = `
+                        <div class="attachment-preview file-preview">
+                            <div class="file-container">
+                                <i class="fas fa-file"></i>
+                                <div class="file-info">
+                                    <span class="file-name">${attachment.name}</span>
+                                    <span class="file-size">${formatFileSize(attachment.size)}</span>
+                                </div>
+                                <a href="${attachment.url}" download="${attachment.name}" class="download-button">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            contentContainer.appendChild(attachmentElement);
+        });
+    }
 
-    // إضافة التوقيت
-    const timestamp = document.createElement('div');
-    timestamp.className = 'message-time small text-muted mt-1';
-    const messageDate = new Date(messageData.timestamp);
-    timestamp.textContent = messageDate.toLocaleTimeString('ar-EG', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    messageElement.appendChild(timestamp);
-
+    // إضافة معلومات الوقت والحالة
+    const messageFooter = document.createElement('div');
+    messageFooter.className = 'message-footer';
+    messageFooter.innerHTML = `
+        <span class="message-time">${formatMessageTime(messageData.timestamp)}</span>
+        ${isSender ? '<i class="fas fa-check-double message-status"></i>' : ''}
+    `;
+    contentContainer.appendChild(messageFooter);
+    
+    messageElement.appendChild(contentContainer);
     messagesContainer.appendChild(messageElement);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+// دالة عرض الوسائط في حجم كامل
+function showMediaPreview(url, type) {
+    if (type === 'image') {
+        Swal.fire({
+            imageUrl: url,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                container: 'media-preview-container',
+                image: 'media-preview-image'
+            },
+            background: 'rgba(0,0,0,0.9)',
+            width: '100%',
+            padding: 0,
+            heightAuto: false,
+            click: (e) => {
+                if (e.target.classList.contains('swal2-container')) {
+                    Swal.close();
+                }
+            }
+        });
+    }
+}
+
+// دالة تنسيق الوقت
+function formatMessageTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+        return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+        return 'أمس';
+    } else {
+        return date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+    }
+}
 // دالة تنسيق حجم الملف
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
@@ -3516,255 +4362,315 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
-
-// تخزين الملفات المحددة
-let selectedFiles = {
-    images: [],
-    audio: [],
-    files: []
-};
-
-// دالة معالجة اختيار الملفات
+    // ...existing code...
+    
+    // تحديث دالة معالجة اختيار الملفات
 function handleFileSelection(event, type) {
     const files = Array.from(event.target.files);
     
     files.forEach(file => {
-        // إضافة الملف للمصفوفة المناسبة
-        switch(type) {
-            case 'image':
-                selectedFiles.images.push(file);
-                break;
-            case 'audio':
-                selectedFiles.audio.push(file);
-                break;
-            case 'file':
-                selectedFiles.files.push(file);
-                break;
+        if (type === 'image') {
+            // إظهار معاينة الصورة مباشرة في خانة الدردشة
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.createElement('div');
+                preview.className = 'selected-file-preview';
+                preview.dataset.type = type;
+                preview.dataset.file = JSON.stringify(file);
+                preview.innerHTML = `
+                    <div class="preview-inner">
+                        <img src="${e.target.result}" alt="${file.name}">
+                        <button type="button" class="remove-preview" onclick="removeSelectedFile(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                document.querySelector('.input-wrapper').insertBefore(preview, document.querySelector('.message-input'));
+            };
+            reader.readAsDataURL(file);
+        } else if (type === 'audio') {
+            // إظهار معاينة الملف الصوتي
+            const preview = document.createElement('div');
+            preview.className = 'selected-file-preview';
+            preview.dataset.type = type;
+            preview.dataset.file = JSON.stringify(file);
+            preview.innerHTML = `
+                <div class="preview-inner">
+                    <div class="audio-preview">
+                        <i class="fas fa-music"></i>
+                        <span>${file.name}</span>
+                    </div>
+                    <button type="button" class="remove-preview" onclick="removeSelectedFile(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.querySelector('.input-wrapper').insertBefore(preview, document.querySelector('.message-input'));
+        } else {
+            // إظهار معاينة الملفات الأخرى
+            const preview = document.createElement('div');
+            preview.className = 'selected-file-preview';
+            preview.dataset.type = type;
+            preview.dataset.file = JSON.stringify(file);
+            preview.innerHTML = `
+                <div class="preview-inner">
+                    <div class="file-preview">
+                        <i class="fas fa-file"></i>
+                        <span>${file.name}</span>
+                    </div>
+                    <button type="button" class="remove-preview" onclick="removeSelectedFile(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.querySelector('.input-wrapper').insertBefore(preview, document.querySelector('.message-input'));
         }
     });
-    
-    // تحديث منطقة المعاينة
-    updatePreviewArea();
 }
 
-// دالة تحديث منطقة المعاينة
-function updatePreviewArea() {
-    const previewArea = document.getElementById('preview-area');
-    const previewFiles = document.getElementById('preview-files');
-    
-    // إظهار منطقة المعاينة إذا كان هناك ملفات
-    const hasFiles = selectedFiles.images.length > 0 || 
-                    selectedFiles.audio.length > 0 || 
-                    selectedFiles.files.length > 0;
-    
-    previewArea.style.display = hasFiles ? 'block' : 'none';
-    previewFiles.innerHTML = '';
-    
-    // إضافة معاينات الصور
-    selectedFiles.images.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const previewItem = createPreviewItem('image', e.target.result, file.name, 'images', index);
-            previewFiles.appendChild(previewItem);
-        };
-        reader.readAsDataURL(file);
-    });
-    
-    // إضافة معاينات الملفات الصوتية
-    selectedFiles.audio.forEach((file, index) => {
-        const previewItem = createPreviewItem('audio', URL.createObjectURL(file), file.name, 'audio', index);
-        previewFiles.appendChild(previewItem);
-    });
-    
-    // إضافة معاينات الملفات العامة
-    selectedFiles.files.forEach((file, index) => {
-        const previewItem = createPreviewItem('file', null, file.name, 'files', index);
-        previewFiles.appendChild(previewItem);
-    });
-}
-
-// دالة إنشاء عنصر المعاينة
-function createPreviewItem(type, src, name, arrayType, index) {
-    const div = document.createElement('div');
-    div.className = 'preview-item';
-    
-    switch(type) {
-        case 'image':
-            div.innerHTML = `
-                <img src="${src}" alt="${name}">
-                <span class="file-name">${name}</span>
-            `;
-            break;
-            
-        case 'audio':
-            div.innerHTML = `
-                <div class="preview-audio">
-                    <audio controls>
-                        <source src="${src}" type="audio/mpeg">
-                    </audio>
-                </div>
-                <span class="file-name">${name}</span>
-            `;
-            break;
-            
-        case 'file':
-            div.innerHTML = `
-                <div class="preview-file">
-                    <i class="fas fa-file fa-2x"></i>
-                    <span class="file-name">${name}</span>
-                </div>
-            `;
-            break;
-    }
-    
-    // إضافة زر الحذف
-    const removeButton = document.createElement('button');
-    removeButton.className = 'remove-file';
-    removeButton.innerHTML = '<i class="fas fa-times"></i>';
-    removeButton.onclick = () => removeFile(arrayType, index);
-    
-    div.appendChild(removeButton);
-    return div;
-}
-
-// دالة حذف ملف
-function removeFile(arrayType, index) {
-    selectedFiles[arrayType].splice(index, 1);
-    updatePreviewArea();
+// دالة حذف الملف المحدد
+function removeSelectedFile(button) {
+    button.closest('.selected-file-preview').remove();
 }
 
 // تحديث دالة إرسال الرسالة
 async function sendMessage(event) {
     event.preventDefault();
-    
     const messageInput = document.getElementById('message-input');
     const message = messageInput.value.trim();
-    const hasFiles = selectedFiles.images.length > 0 || 
-                    selectedFiles.audio.length > 0 || 
-                    selectedFiles.files.length > 0;
+    const selectedFiles = Array.from(document.querySelectorAll('.selected-file-preview'));
     
-    if (!message && !hasFiles) return;
+    if (!message && selectedFiles.length === 0) return;
     
     try {
-        // عرض مؤشر التحميل
-        if (hasFiles) {
-            Swal.fire({
-                title: 'جاري رفع الملفات...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-        }
-        
         const chatId = getChatId(currentUser.uid, currentChatUser.uid);
-        const messageRef = database.ref(`chats/${chatId}/messages`).push();
-        
-        // رفع الملفات
-        const uploadedFiles = {
-            images: await Promise.all(selectedFiles.images.map(file => uploadFile(file, 'images'))),
-            audio: await Promise.all(selectedFiles.audio.map(file => uploadFile(file, 'audio'))),
-            files: await Promise.all(selectedFiles.files.map(file => uploadFile(file, 'files')))
-        };
-        
-        // إرسال الرسالة مع الملفات
-        await messageRef.set({
+        const messageData = {
             senderId: currentUser.uid,
             senderName: currentUser.username,
             message: message,
-            files: uploadedFiles,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            attachments: []
+        };
+
+        // رفع الملفات المرفقة
+        for (const filePreview of selectedFiles) {
+            const file = JSON.parse(filePreview.dataset.file);
+            const type = filePreview.dataset.type;
+            const fileRef = storage.ref(`chats/${currentUser.uid}/${Date.now()}_${file.name}`);
+            
+            if (type === 'image') {
+                const dataUrl = filePreview.querySelector('img').src;
+                const response = await fetch(dataUrl);
+                const blob = await response.blob();
+                await fileRef.put(blob);
+                const url = await fileRef.getDownloadURL();
+                messageData.attachments.push({
+                    type: 'image',
+                    url: url,
+                    name: file.name
+                });
+            } else {
+                const blob = new Blob([file], { type: file.type });
+                await fileRef.put(blob);
+                const url = await fileRef.getDownloadURL();
+                messageData.attachments.push({
+                    type: type,
+                    url: url,
+                    name: file.name,
+                    size: file.size
+                });
+            }
+        }
+
+        // إرسال الرسالة
+        await database.ref(`chats/${chatId}/messages`).push(messageData);
         
-        // تنظيف النموذج
+        // تنظيف الحقول
         messageInput.value = '';
-        selectedFiles = { images: [], audio: [], files: [] };
-        updatePreviewArea();
+        selectedFiles.forEach(preview => preview.remove());
         
-        if (hasFiles) {
-            Swal.close();
+    } catch (error) {
+        console.error('خطأ في إرسال الرسالة:', error);
+        alert('حدث خطأ في إرسال الرسالة');
+    }
+}
+
+// تحديث دالة معالجة اختيار الملفات
+// دالة معالجة اختيار الملفات
+// دالة معالجة اختيار الملفات
+async function handleFileSelection(event, type) {
+    const files = Array.from(event.target.files);
+    const container = document.getElementById('selected-files-container');
+    const previewArea = document.getElementById('file-preview-area');
+    
+    // إظهار منطقة المعاينة
+    previewArea.style.display = 'block';
+    
+    for (const file of files) {
+        const preview = document.createElement('div');
+        preview.className = 'selected-file-preview';
+        preview.dataset.type = type;
+        preview.file = file;
+        
+        if (type === 'image') {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `
+                    <div class="preview-inner">
+                        <img src="${e.target.result}" alt="${file.name}">
+                        <button class="remove-preview" onclick="removeSelectedFile(this)">×</button>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else if (type === 'audio') {
+            preview.innerHTML = `
+                <div class="preview-inner">
+                    <div class="audio-preview">
+                        <i class="fas fa-music"></i>
+                        <span>${file.name}</span>
+                        <button class="remove-preview" onclick="removeSelectedFile(this)">×</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            preview.innerHTML = `
+                <div class="preview-inner">
+                    <div class="file-preview">
+                        <i class="fas fa-file"></i>
+                        <span>${file.name}</span>
+                        <button class="remove-preview" onclick="removeSelectedFile(this)">×</button>
+                    </div>
+                </div>
+            `;
         }
         
+        container.appendChild(preview);
+    }
+    
+    // تعديل حجم حقل الإدخال
+    adjustInputHeight();
+}
+
+// دالة إزالة الملف
+function removeSelectedFile(button) {
+    const preview = button.closest('.selected-file-preview');
+    const container = preview.parentElement;
+    preview.remove();
+    
+    // إخفاء منطقة المعاينة إذا لم تعد هناك ملفات
+    if (container.children.length === 0) {
+        document.getElementById('file-preview-area').style.display = 'none';
+    }
+    
+    // تعديل حجم حقل الإدخال
+    adjustInputHeight();
+}
+
+// دالة تعديل حجم حقل الإدخال
+function adjustInputHeight() {
+    const previewArea = document.getElementById('file-preview-area');
+    const messageInput = document.getElementById('message-input');
+    
+    if (previewArea.style.display === 'none') {
+        messageInput.style.height = 'auto';
+    } else {
+        messageInput.style.height = '40px';
+    }
+}
+
+// دالة مساعدة لتحويل الملف إلى Base64
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+    });
+}
+
+// دالة إزالة الملف المحدد
+function removeSelectedFile(button) {
+    button.closest('.selected-file-preview').remove();
+    if (document.querySelectorAll('.selected-file-preview').length === 0) {
+        document.getElementById('file-preview-area').style.display = 'none';
+    }
+}
+
+// دالة تنظيف جميع الملفات المحددة
+function clearSelectedFiles() {
+    document.querySelectorAll('.selected-file-preview').forEach(preview => preview.remove());
+    document.getElementById('file-preview-area').style.display = 'none';
+}
+
+// تحديث دالة إرسال الرسالة
+async function sendMessage(event) {
+    event.preventDefault();
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    const selectedFiles = Array.from(document.querySelectorAll('.selected-file-preview'));
+    
+    if (!message && selectedFiles.length === 0) return;
+    
+    try {
+        Swal.fire({
+            title: 'جاري الإرسال...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const chatId = getChatId(currentUser.uid, currentChatUser.uid);
+        const messageData = {
+            senderId: currentUser.uid,
+            senderName: currentUser.username,
+            message: message,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            attachments: []
+        };
+
+        // رفع الملفات المرفقة
+        for (const filePreview of selectedFiles) {
+            const file = filePreview.file;
+            const type = filePreview.dataset.type;
+            
+            try {
+                const fileRef = storage.ref(`chats/${currentUser.uid}/${Date.now()}_${file.name}`);
+                await fileRef.put(file);
+                const url = await fileRef.getDownloadURL();
+                
+                messageData.attachments.push({
+                    type: type,
+                    url: url,
+                    name: file.name,
+                    size: file.size
+                });
+            } catch (error) {
+                console.error('خطأ في رفع الملف:', error);
+            }
+        }
+
+        // إرسال الرسالة
+        await database.ref(`chats/${chatId}/messages`).push(messageData);
+        
+        // تنظيف الحقول
+        messageInput.value = '';
+        clearSelectedFiles();
+        
+        Swal.close();
     } catch (error) {
         console.error('خطأ في إرسال الرسالة:', error);
         Swal.fire({
             icon: 'error',
-            title: 'خطأ في إرسال الرسالة',
+            title: 'خطأ في الإرسال',
             text: error.message
         });
     }
 }
 
-// دالة رفع ملف
-async function uploadFile(file, type) {
-    const storageRef = storage.ref();
-    const fileRef = storageRef.child(`chats/${currentUser.uid}/${Date.now()}_${file.name}`);
-    await fileRef.put(file);
-    const url = await fileRef.getDownloadURL();
-    
-    return {
-        name: file.name,
-        url: url,
-        type: type,
-        size: file.size
-    };
-}
-
-// تحديث دالة عرض الرسائل
+// تحديث دالة عرض الرسالة
 function displayMessage(messageData) {
-    // ... الكود السابق ...
-    
-    if (messageData.files) {
-        // عرض الملفات المرفقة
-        if (messageData.files.images.length > 0) {
-            const imagesContainer = document.createElement('div');
-            imagesContainer.className = 'message-images';
-            messageData.files.images.forEach(image => {
-                imagesContainer.innerHTML += `
-                    <img src="${image.url}" alt="${image.name}" class="message-image">
-                `;
-            });
-            content.appendChild(imagesContainer);
-        }
-        
-        if (messageData.files.audio.length > 0) {
-            const audioContainer = document.createElement('div');
-            audioContainer.className = 'message-audio-files';
-            messageData.files.audio.forEach(audio => {
-                audioContainer.innerHTML += `
-                    <audio controls class="message-audio">
-                        <source src="${audio.url}" type="audio/mpeg">
-                    </audio>
-                `;
-            });
-            content.appendChild(audioContainer);
-        }
-        
-        if (messageData.files.files.length > 0) {
-            const filesContainer = document.createElement('div');
-            filesContainer.className = 'message-files';
-            messageData.files.files.forEach(file => {
-                filesContainer.innerHTML += `
-                    <div class="message-file">
-                        <i class="fas fa-file file-icon"></i>
-                        <div class="file-info">
-                            <span class="file-name">${file.name}</span>
-                            <span class="file-size">${formatFileSize(file.size)}</span>
-                        </div>
-                        <a href="${file.url}" target="_blank" class="btn btn-sm btn-primary">
-                            <i class="fas fa-download"></i>
-                        </a>
-                    </div>
-                `;
-            });
-            content.appendChild(filesContainer);
-        }
-    }
-    
-    // ... باقي الكود ...
-}
-   
-    function displayMessage(messageData) {
     const messagesContainer = document.getElementById('messages-container');
     const messageElement = document.createElement('div');
     messageElement.classList.add('message');
@@ -3772,130 +4678,557 @@ function displayMessage(messageData) {
     const isSender = messageData.senderId === currentUser.uid;
     messageElement.classList.add(isSender ? 'message-sent' : 'message-received');
     
-    // إضافة صورة المرسل للرسائل المستلمة
-    if (!isSender) {
-        const avatarContainer = document.createElement('div');
-        avatarContainer.className = 'd-flex align-items-start mb-1';
-        
-        const avatar = document.createElement('img');
-        avatar.src = currentChatUser.avatarUrl;
-        avatar.className = 'user-avatar me-2';
-        avatar.style.width = '30px';
-        avatar.style.height = '30px';
-        avatarContainer.appendChild(avatar);
-        
-        messageElement.appendChild(avatarContainer);
-    }
+    let messageContent = '';
 
-    // إضافة محتوى الرسالة
+    // إضافة نص الرسالة
     if (messageData.message) {
-        const textContent = document.createElement('div');
-        textContent.className = 'message-text';
-        textContent.textContent = messageData.message;
-        messageElement.appendChild(textContent);
+        messageContent += `<div class="message-text">${messageData.message}</div>`;
     }
 
-    // إضافة الملفات المرفقة
-    if (messageData.files) {
-        const attachmentsContainer = document.createElement('div');
-        attachmentsContainer.className = 'message-attachments';
-
-        // عرض الصور
-        if (messageData.files.images && messageData.files.images.length > 0) {
-            const imagesContainer = document.createElement('div');
-            imagesContainer.className = 'message-images';
-            
-            messageData.files.images.forEach(image => {
-                const imgElement = document.createElement('img');
-                imgElement.src = image.url;
-                imgElement.alt = image.name;
-                imgElement.className = 'message-image';
-                imgElement.onclick = () => openImageViewer(image.url);
-                imagesContainer.appendChild(imgElement);
-            });
-            
-            attachmentsContainer.appendChild(imagesContainer);
-        }
-
-        // عرض الملفات الصوتية
-        if (messageData.files.audio && messageData.files.audio.length > 0) {
-            messageData.files.audio.forEach(audio => {
-                const audioContainer = document.createElement('div');
-                audioContainer.className = 'audio-container';
-                audioContainer.innerHTML = `
-                    <audio class="message-audio" controls>
-                        <source src="${audio.url}" type="audio/mpeg">
-                        متصفحك لا يدعم تشغيل الملفات الصوتية
-                    </audio>
-                `;
-                attachmentsContainer.appendChild(audioContainer);
-            });
-        }
-
-        // عرض الملفات العامة
-        if (messageData.files.files && messageData.files.files.length > 0) {
-            messageData.files.files.forEach(file => {
-                const fileElement = document.createElement('div');
-                fileElement.className = 'message-file';
-                fileElement.innerHTML = `
-                    <i class="fas fa-file file-icon"></i>
-                    <div class="file-info">
-                        <div class="file-name">${file.name}</div>
-                        <div class="file-size">${formatFileSize(file.size)}</div>
-                    </div>
-                    <a href="${file.url}" target="_blank" class="download-btn">
-                        <i class="fas fa-download"></i>
-                    </a>
-                `;
-                attachmentsContainer.appendChild(fileElement);
-            });
-        }
-
-        messageElement.appendChild(attachmentsContainer);
+    // إضافة المرفقات
+    if (messageData.attachments && messageData.attachments.length > 0) {
+        messageContent += '<div class="message-attachments">';
+        messageData.attachments.forEach(attachment => {
+            switch (attachment.type) {
+                case 'image':
+                    messageContent += `
+                        <img src="${attachment.url}" 
+                             alt="${attachment.name}" 
+                             class="message-image"
+                             onclick="showFullImage('${attachment.url}')">
+                    `;
+                    break;
+                case 'audio':
+                    messageContent += `
+                        <div class="message-audio">
+                            <audio controls>
+                                <source src="${attachment.url}" type="audio/mpeg">
+                            </audio>
+                            <div class="audio-info">
+                                <span>${attachment.name}</span>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                default:
+                    messageContent += `
+                        <div class="message-file">
+                            <i class="fas fa-file file-icon"></i>
+                            <div class="file-info">
+                                <div class="file-name">${attachment.name}</div>
+                                <div class="file-size">${formatFileSize(attachment.size)}</div>
+                            </div>
+                            <a href="${attachment.url}" download="${attachment.name}" class="download-btn">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    `;
+            }
+        });
+        messageContent += '</div>';
     }
 
     // إضافة التوقيت
-    const timestamp = document.createElement('div');
-    timestamp.className = 'message-time small text-muted mt-1';
-    const messageDate = new Date(messageData.timestamp);
-    timestamp.textContent = messageDate.toLocaleTimeString('ar-EG', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    messageElement.appendChild(timestamp);
+    messageContent += `
+        <div class="message-time">
+            ${new Date(messageData.timestamp).toLocaleTimeString('ar-EG', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
+        </div>
+    `;
 
+    messageElement.innerHTML = messageContent;
     messagesContainer.appendChild(messageElement);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// دالة لعرض الصور في عارض كامل الشاشة
-function openImageViewer(imageUrl) {
+// دالة عرض الصورة في حجم كامل
+function showFullImage(url) {
     Swal.fire({
-        imageUrl: imageUrl,
+        imageUrl: url,
         imageAlt: 'صورة مرفقة',
-        width: '80%',
-        padding: '3em',
-        showConfirmButton: false,
         showCloseButton: true,
-        background: '#000000dd',
-        backdrop: `
-            rgba(0,0,0,0.9)
-            center
-            no-repeat
-        `
+        showConfirmButton: false,
+        width: '90%'
     });
 }
 
 // دالة تنسيق حجم الملف
 function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return '0 B';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-} // ...existing code...
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+}
+
+// تحديث دالة تحميل الرسائل
+function loadMessages(chatId) {
+    const messagesContainer = document.getElementById('messages-container');
+    messagesContainer.innerHTML = '';
     
-    drop
+    // إلغاء الاستماع للمحادثات السابقة
+    if (window.currentMessagesRef) {
+        window.currentMessagesRef.off();
+    }
+    
+    // الاستماع للرسائل الجديدة
+    window.currentMessagesRef = database.ref(`chats/${chatId}/messages`);
+    window.currentMessagesRef.on('child_added', (snapshot) => {
+        const messageData = snapshot.val();
+        displayMessage(messageData);
+    });
+}
+
+// تحديث دالة معالجة اختيار الملفات
+async function handleFileSelection(event, type) {
+    const files = Array.from(event.target.files);
+    
+    // عرض منطقة المعاينة
+    document.getElementById('file-preview-area').style.display = 'block';
+    const container = document.getElementById('selected-files-container');
+    
+    for (const file of files) {
+        const preview = document.createElement('div');
+        preview.className = 'file-preview';
+        preview.dataset.type = type;
+        preview.file = file;
+        
+        if (type === 'image') {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <button class="remove-file" onclick="removeSelectedFile(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="file-name">${file.name}</div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else if (type === 'audio') {
+            preview.innerHTML = `
+                <div class="file-icon">
+                    <i class="fas fa-music"></i>
+                </div>
+                <button class="remove-file" onclick="removeSelectedFile(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="file-name">${file.name}</div>
+            `;
+        } else {
+            preview.innerHTML = `
+                <div class="file-icon">
+                    <i class="fas fa-file"></i>
+                </div>
+                <button class="remove-file" onclick="removeSelectedFile(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="file-name">${file.name}</div>
+            `;
+        }
+        
+        container.appendChild(preview);
+    }
+}
+
+// تحديث دالة إرسال الرسالة
+async function sendMessage(event) {
+    event.preventDefault();
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    const fileElements = document.querySelectorAll('.file-preview');
+    
+    if (!message && fileElements.length === 0) return;
+    
+    try {
+        Swal.fire({
+            title: 'جاري الإرسال...',
+            text: 'يرجى الانتظار حتى يتم رفع الملفات',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const chatId = getChatId(currentUser.uid, currentChatUser.uid);
+        const messageData = {
+            senderId: currentUser.uid,
+            senderName: currentUser.username,
+            message: message,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            attachments: []
+        };
+
+        // رفع الملفات
+        for (const element of fileElements) {
+            const file = element.file;
+            const type = element.dataset.type;
+            const fileRef = storage.ref(`chats/${chatId}/${Date.now()}_${file.name}`);
+            
+            // رفع الملف
+            await fileRef.put(file);
+            const url = await fileRef.getDownloadURL();
+            
+            messageData.attachments.push({
+                type: type,
+                url: url,
+                name: file.name,
+                size: file.size
+            });
+        }
+
+        // حفظ الرسالة في قاعدة البيانات
+        await database.ref(`chats/${chatId}/messages`).push(messageData);
+        
+        // تنظيف الحقول
+        messageInput.value = '';
+        document.getElementById('file-preview-area').style.display = 'none';
+        document.getElementById('selected-files-container').innerHTML = '';
+        
+        Swal.close();
+    } catch (error) {
+        console.error('Error sending message:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في الإرسال',
+            text: 'حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.'
+        });
+    }
+}
+
+// دالة عرض الرسائل
+function displayMessage(messageData) {
+    const messagesContainer = document.getElementById('messages-container');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    
+    const isSender = messageData.senderId === currentUser.uid;
+    messageElement.classList.add(isSender ? 'message-sent' : 'message-received');
+    
+    let content = '';
+    
+    // إضافة نص الرسالة
+    if (messageData.message) {
+        content += `<div class="message-text">${messageData.message}</div>`;
+    }
+    
+    // إضافة المرفقات
+    if (messageData.attachments && messageData.attachments.length > 0) {
+        content += '<div class="message-attachments">';
+        messageData.attachments.forEach(attachment => {
+            switch (attachment.type) {
+                case 'image':
+                    content += `
+                        <div class="attachment-preview">
+                            <img src="${attachment.url}" alt="${attachment.name}" 
+                                class="message-image" onclick="showMediaPreview('${attachment.url}')">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'audio':
+                    content += `
+                        <div class="message-audio-wrapper">
+                            <audio controls class="message-audio">
+                                <source src="${attachment.url}" type="audio/mpeg">
+                            </audio>
+                            <div class="audio-info">
+                                <span>${attachment.name}</span>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                default:
+                    content += `
+                        <div class="message-file-wrapper">
+                            <div class="file-info">
+                                <i class="fas fa-file"></i>
+                                <span>${attachment.name}</span>
+                                <small>${formatFileSize(attachment.size)}</small>
+                            </div>
+                            <a href="${attachment.url}" download="${attachment.name}" class="file-download">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    `;
+                    break;
+            }
+        });
+        content += '</div>';
+    }
+    
+    // إضافة التوقيت
+    content += `
+        <div class="message-time">
+            ${new Date(messageData.timestamp).toLocaleTimeString('ar-EG', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
+        </div>
+    `;
+    
+    messageElement.innerHTML = content;
+    messagesContainer.appendChild(messageElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// دالة عرض الوسائط
+function showMediaPreview(url) {
+    Swal.fire({
+        imageUrl: url,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'media-preview-container',
+            image: 'media-preview-image'
+        },
+        background: 'rgba(0,0,0,0.9)',
+        width: '100%',
+        padding: 0
+    });
+}
+
+// دالة إزالة ملف محدد
+function removeSelectedFile(button) {
+    const preview = button.closest('.file-preview');
+    preview.remove();
+    
+    // إخفاء منطقة المعاينة إذا لم تعد هناك ملفات
+    if (document.querySelectorAll('.file-preview').length === 0) {
+        document.getElementById('file-preview-area').style.display = 'none';
+    }
+}
+
+// إضافة مستمعي الأحداث عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    // تعطيل السحب والإفلات الافتراضي للمتصفح
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    
+    // تمكين السحب والإفلات في منطقة الإدخال
+    const inputWrapper = document.querySelector('.input-wrapper');
+    
+    inputWrapper.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        inputWrapper.classList.add('drag-over');
+    });
+    
+    inputWrapper.addEventListener('dragleave', () => {
+        inputWrapper.classList.remove('drag-over');
+    });
+    
+    inputWrapper.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        inputWrapper.classList.remove('drag-over');
+        
+        const files = Array.from(e.dataTransfer.files);
+        files.forEach(file => {
+            let type = 'file';
+            if (file.type.startsWith('image/')) {
+                type = 'image';
+            } else if (file.type.startsWith('audio/')) {
+                type = 'audio';
+            }
+            
+            const event = { target: { files: [file] } };
+            handleFileSelection(event, type);
+        });
+    });
+});
+// دالة مساعدة لتحويل الملف إلى Base64
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+    });
+}
+
+// تحديث دالة إرسال الرسالة
+async function sendMessage(event) {
+    event.preventDefault();
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    const selectedFiles = Array.from(document.querySelectorAll('.selected-file-preview'));
+    
+    // التحقق من وجود رسالة أو ملفات
+    if (!message && selectedFiles.length === 0) return;
+    
+    try {
+        Swal.fire({
+            title: 'جاري الإرسال...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const chatId = getChatId(currentUser.uid, currentChatUser.uid);
+        const messageData = {
+            senderId: currentUser.uid,
+            senderName: currentUser.username,
+            message: message,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            attachments: []
+        };
+
+        // رفع الملفات المرفقة
+        if (selectedFiles.length > 0) {
+            for (const filePreview of selectedFiles) {
+                const file = filePreview.file;
+                const type = filePreview.dataset.type;
+                
+                try {
+                    const fileRef = storage.ref(`chats/${currentUser.uid}/${Date.now()}_${file.name}`);
+                    await fileRef.put(file);
+                    const url = await fileRef.getDownloadURL();
+                    
+                    messageData.attachments.push({
+                        type: type,
+                        url: url,
+                        name: file.name,
+                        size: file.size
+                    });
+                } catch (error) {
+                    console.error('خطأ في رفع الملف:', error);
+                }
+            }
+        }
+
+        // إرسال الرسالة
+        await database.ref(`chats/${chatId}/messages`).push(messageData);
+        
+        // تنظيف الحقول
+        messageInput.value = '';
+        selectedFiles.forEach(preview => preview.remove());
+        
+        Swal.close();
+    } catch (error) {
+        console.error('خطأ في إرسال الرسالة:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في الإرسال',
+            text: error.message
+        });
+    }
+}
+
+// تحديث دالة عرض الرسالة لتشمل المرفقات
+// تحديث دالة displayMessage لعرض الرسائل والمرفقات في messages-container
+function displayMessage(messageData) {
+    const messagesContainer = document.getElementById('messages-container');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    
+    const isSender = messageData.senderId === currentUser.uid;
+    messageElement.classList.add(isSender ? 'message-sent' : 'message-received');
+
+    let messageContent = '';
+
+    // إضافة الرسالة النصية إذا وجدت
+    if (messageData.message) {
+        messageContent += `<div class="message-text">${messageData.message}</div>`;
+    }
+
+    // إضافة المرفقات إذا وجدت
+    if (messageData.attachments && messageData.attachments.length > 0) {
+        messageData.attachments.forEach(attachment => {
+            switch (attachment.type) {
+                case 'image':
+                    messageContent += `
+                        <div class="attachment-preview">
+                            <img src="${attachment.url}" alt="${attachment.name}" class="message-image" onclick="showFullImage('${attachment.url}')">
+                        </div>
+                    `;
+                    break;
+                case 'audio':
+                    messageContent += `
+                        <div class="message-audio-wrapper">
+                            <audio controls class="message-audio">
+                                <source src="${attachment.url}" type="audio/mpeg">
+                            </audio>
+                            <div class="audio-info">
+                                <i class="fas fa-music"></i>
+                                <span>${attachment.name}</span>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'file':
+                    messageContent += `
+                        <div class="message-file-wrapper">
+                            <div class="file-info">
+                                <i class="fas fa-file"></i>
+                                <span>${attachment.name}</span>
+                                <small>${formatFileSize(attachment.size)}</small>
+                            </div>
+                            <a href="${attachment.url}" download="${attachment.name}" class="file-download">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    `;
+                    break;
+            }
+        });
+    }
+
+    // إضافة التوقيت
+    messageContent += `
+        <div class="message-time">
+            ${new Date(messageData.timestamp).toLocaleTimeString('ar-EG', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
+        </div>
+    `;
+
+    messageElement.innerHTML = messageContent;
+    messagesContainer.appendChild(messageElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// دالة لعرض الصورة في وضع ملء الشاشة
+function showFullImage(url) {
+    Swal.fire({
+        imageUrl: url,
+        imageAlt: 'صورة مرفقة',
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'full-image-container',
+            image: 'full-image'
+        },
+        background: 'rgba(0,0,0,0.9)',
+        width: '100%',
+        height: '100%',
+        padding: 0
+    });
+}
+// دالة عرض الصورة في حجم كامل
+function showFullImage(url) {
+    Swal.fire({
+        imageUrl: url,
+        imageAlt: 'صورة مرفقة',
+        showCloseButton: true,
+        showConfirmButton: false,
+        width: '90%'
+    });
+}
+
+
 </script>
 </body>
 </html>

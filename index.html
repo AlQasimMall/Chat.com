@@ -2146,77 +2146,136 @@ audio {
     to { transform: rotate(360deg); }
 }
 
-.message-attachment {
-    position: relative;
-    margin-top: 5px;
-    border-radius: 8px;
-    overflow: hidden;
+/* حاوية الرسائل */
+.chat-messages {
+    background-color: #efeae2; /* خلفية الواتساب */
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QgRDgEHUL/HpQAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAADZklEQVRo3u2ZTUhUURTH//fe98Y0M6AmFCQhQhAEQR9gm2qRUFZE0aKoXS2CCIMWfUC7Nm3atMsIoRYtgqCIIBJKqEWWUM0igyIMoRKtGnWa9+5p0cw4zevNvPvmpUHzhy/vHc57/3
 }
 
-.attachment-loading {
+/* أزرار الاتصال في الهيدر */
+.call-button {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-right: 8px;
+    transition: all 0.3s ease;
+}
+
+.call-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* واجهة الاتصال */
+.call-interface {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    z-index: 9999;
+    direction: ltr;
+}
+
+.call-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2rem;
+    color: white;
+}
+
+.call-header {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.caller-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    border: 3px solid white;
+}
+
+.caller-name {
+    font-size: 24px;
+    margin-bottom: 0.5rem;
+}
+
+.call-status {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.call-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.control-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-mic, .toggle-speaker, .toggle-camera {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.end-call {
+    background: #ff4444;
+    color: white;
+}
+
+.control-button:hover {
+    transform: scale(1.1);
+}
+
+.control-button.muted {
+    background: #ff4444;
+}
+
+.remote-video {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    transition: opacity 0.3s ease;
+    z-index: -1;
+    background: #111;
 }
 
-.loading-spinner {
-    width: 30px;
-    height: 30px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.message-status-wrapper {
-    position: relative;
-    width: 20px;
-    height: 16px;
-    margin-left: 4px;
-}
-
-.message-status-single,
-.message-status-double {
+.local-video {
     position: absolute;
-    right: 0;
-    bottom: 0;
-    font-size: 12px;
-    opacity: 0;
-    transition: all 0.3s ease;
-    color: #333;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    height: 150px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid white;
+    background: #222;
 }
-
-.message-status-double.seen {
-    color: #0099ff;
-}
-
-.message-footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-    margin-top: 4px;
-    font-size: 12px;
-    color: rgba(0, 0, 0, 0.5);
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* حاوية الرسائل */
-.chat-messages {
-    background-color: #efeae2; /* خلفية الواتساب */
-    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QgRDgEHUL/HpQAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAADZklEQVRo3u2ZTUhUURTH//fe98Y0M6AmFCQhQhAEQR9gm2qRUFZE0aKoXS2CCIMWfUC7Nm3atMsIoRYtgqCIIBJKqEWWUM0igyIMoRKtGnWa9+5p0cw4zevNvPvmpUHzhy/vHc57/3
-
     </style>
 </head>
 <body>
@@ -2388,14 +2447,22 @@ audio {
                 <button class="back-button" onclick="showUsersList()">
                     <i class="fas fa-arrow-left"></i>
                 </button>
+                <button class="call-button" onclick="startVoiceCall()">
+        <i class="fas fa-phone"></i>
+    </button>
+    <button class="call-button" onclick="startVideoCall()">
+        <i class="fas fa-video"></i>
+    </button>
                 <div class="user-info-section">
                     <img id="chat-user-avatar" src="/api/placeholder/45/45" alt="الصورة الشخصية" class="user-avatar">
                     <div class="user-details">
                         <h5 class="user-name" id="chat-user-name">اسم الم00ستخدم</h5>
                         <small class="user-id" id="chat-user-id">المعرف: </small>
                     </div>
+                    
                 </div>
             </div>
+            
             <div class="header-actions">
                 <button class="menu-trigger" onclick="toggleUserMenu(event)">
                     <i class="fas fa-ellipsis-v"></i>
@@ -2430,6 +2497,8 @@ audio {
             </div>
         </div>
     </div>
+    
+    
 
     <div class="chat-messages" id="messages-container">
         <!-- سيتم إضافة الرسائل هنا ديناميكياً -->
@@ -2470,6 +2539,33 @@ audio {
             <input type="file" id="file-upload" accept="*/*" multiple style="display: none" onchange="handleFileSelection(event, 'file')">
         </div>
     </form>
+</div>
+
+<!-- واجهة الاتصال -->
+<div id="call-interface" class="call-interface">
+    <div class="call-container">
+        <div class="call-header">
+            <img id="caller-avatar" src="" alt="صورة المتصل" class="caller-avatar">
+            <h3 id="caller-name" class="caller-name"></h3>
+            <p id="call-status" class="call-status"></p>
+        </div>
+        <div class="call-controls">
+            <button class="control-button toggle-mic" onclick="toggleMic()">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button class="control-button toggle-speaker" onclick="toggleSpeaker()">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <button class="control-button end-call" onclick="endCall()">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+            <button class="control-button toggle-camera" onclick="toggleCamera()">
+                <i class="fas fa-video"></i>
+            </button>
+        </div>
+        <div id="remote-video" class="remote-video"></div>
+        <div id="local-video" class="local-video"></div>
+    </div>
 </div>
 
     <!-- المكتبات المطلوبة -->
@@ -5166,6 +5262,133 @@ function showFullImage(url) {
     });
 }
 
+// متغيرات للاتصال
+let currentCall = null;
+let localStream = null;
+let remoteStream = null;
+let peerConnection = null;
+
+// بدء مكالمة صوتية
+async function startVoiceCall() {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: true, 
+            video: false 
+        });
+        
+        showCallInterface('voice');
+        setupPeerConnection();
+        
+        // إرسال عرض المكالمة للمستخدم الآخر
+        const callOffer = {
+            type: 'voice-call-offer',
+            from: currentUser.uid,
+            to: currentChatUser.uid,
+            timestamp: Date.now()
+        };
+        
+        await database.ref(`calls/${currentChatUser.uid}`).push(callOffer);
+        
+    } catch (error) {
+        console.error('خطأ في بدء المكالمة:', error);
+        alert('لا يمكن الوصول إلى الميكروفون');
+    }
+}
+
+// بدء مكالمة فيديو
+async function startVideoCall() {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: true, 
+            video: true 
+        });
+        
+        showCallInterface('video');
+        setupPeerConnection();
+        
+        const callOffer = {
+            type: 'video-call-offer',
+            from: currentUser.uid,
+            to: currentChatUser.uid,
+            timestamp: Date.now()
+        };
+        
+        await database.ref(`calls/${currentChatUser.uid}`).push(callOffer);
+        
+    } catch (error) {
+        console.error('خطأ في بدء مكالمة الفيديو:', error);
+        alert('لا يمكن الوصول إلى الكاميرا أو الميكروفون');
+    }
+}
+
+// إظهار واجهة الاتصال
+function showCallInterface(type) {
+    const callInterface = document.getElementById('call-interface');
+    const callerAvatar = document.getElementById('caller-avatar');
+    const callerName = document.getElementById('caller-name');
+    const callStatus = document.getElementById('call-status');
+    
+    callerAvatar.src = currentChatUser.avatarUrl;
+    callerName.textContent = currentChatUser.username;
+    callStatus.textContent = type === 'voice' ? 'جارِ الاتصال...' : 'جارِ بدء مكالمة فيديو...';
+    
+    document.querySelector('.toggle-camera').style.display = type === 'video' ? 'flex' : 'none';
+    callInterface.style.display = 'block';
+    
+    if (type === 'video' && localStream) {
+        const localVideo = document.getElementById('local-video');
+        localVideo.srcObject = localStream;
+        localVideo.play();
+    }
+}
+
+// التحكم في الميكروفون
+function toggleMic() {
+    if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        audioTrack.enabled = !audioTrack.enabled;
+        
+        const micButton = document.querySelector('.toggle-mic');
+        micButton.classList.toggle('muted');
+        micButton.querySelector('i').classList.toggle('fa-microphone');
+        micButton.querySelector('i').classList.toggle('fa-microphone-slash');
+    }
+}
+
+// التحكم في الكاميرا
+function toggleCamera() {
+    if (localStream) {
+        const videoTrack = localStream.getVideoTracks()[0];
+        videoTrack.enabled = !videoTrack.enabled;
+        
+        const cameraButton = document.querySelector('.toggle-camera');
+        cameraButton.classList.toggle('muted');
+        cameraButton.querySelector('i').classList.toggle('fa-video');
+        cameraButton.querySelector('i').classList.toggle('fa-video-slash');
+    }
+}
+
+// إنهاء المكالمة
+function endCall() {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    
+    document.getElementById('call-interface').style.display = 'none';
+    
+    // إرسال إشعار إنهاء المكالمة
+    database.ref(`calls/${currentChatUser.uid}`).push({
+        type: 'call-ended',
+        from: currentUser.uid,
+        timestamp: Date.now()
+    });
+}
 
 </script>
 </body>

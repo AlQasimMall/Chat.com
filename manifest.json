@@ -98,9 +98,3 @@
     }
 }
 
-{
-  "permissions": [
-    "microphone",
-    "camera"
-  ]
-}

@@ -2105,6 +2105,103 @@ audio {
 .chat-messages {
     background-color: #efeae2; /* خلفية الواتساب */
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QgRDgEHUL/HpQAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAADZklEQVRo3u2ZTUhUURTH//fe98Y0M6AmFCQhQhAEQR9gm2qRUFZE0aKoXS2CCIMWfUC7Nm3atMsIoRYtgqCIIBJKqEWWUM0igyIMoRKtGnWa9+5p0cw4zevNvPvmpUHzhy/vHc57/3
+    
+}
+
+/* أنماط المرفقات والتحميل */
+.attachment-container {
+    position: relative;
+    margin: 5px 0;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.loading-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.check-marks {
+    position: absolute;
+    display: flex;
+    gap: 2px;
+    color: white;
+    font-size: 16px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s ease;
+}
+
+.check-marks.hidden {
+    display: none;
+}
+
+.check-marks:not(.hidden) {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* تنسيق المرفقات */
+.message-image {
+    max-width: 200px;
+    border-radius: 8px;
+    display: block;
+}
+
+.message-audio-wrapper {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    border-radius: 8px;
+    width: 250px;
+}
+
+.message-file-wrapper {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 250px;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-download {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
 
     </style>
 </head>
@@ -3005,6 +3102,7 @@ function loadMessages(chatId) {
 
 // دالة عرض الرسالة
 // تحديث دالة عرض الرسائل لدعم المرفقات
+// تحديث دالة عرض الرسائل
 function displayMessage(messageData) {
     const messagesContainer = document.getElementById('messages-container');
     const messageElement = document.createElement('div');
@@ -3013,84 +3111,124 @@ function displayMessage(messageData) {
     const isSender = messageData.senderId === currentUser.uid;
     messageElement.classList.add(isSender ? 'message-sent' : 'message-received');
     
-    // إنشاء حاوية المحتوى
-    const contentContainer = document.createElement('div');
-    contentContainer.className = 'message-content-container';
-    
+    let messageContent = '';
+
     // إضافة نص الرسالة إذا وجد
     if (messageData.message) {
-        const messageText = document.createElement('div');
-        messageText.className = 'message-text';
-        messageText.textContent = messageData.message;
-        contentContainer.appendChild(messageText);
+        messageContent += `<div class="message-text">${messageData.message}</div>`;
     }
-    
-    // إضافة المرفقات إذا وجدت
+
+    // إضافة المرفقات مع مؤشر التحميل
     if (messageData.attachments && messageData.attachments.length > 0) {
+        messageContent += '<div class="message-attachments">';
         messageData.attachments.forEach(attachment => {
-            const attachmentElement = document.createElement('div');
-            attachmentElement.className = 'message-attachment';
+            const attachmentId = `attachment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             
             switch (attachment.type) {
                 case 'image':
-                    attachmentElement.innerHTML = `
-                        <div class="attachment-preview image-preview" onclick="showMediaPreview('${attachment.url}', 'image')">
-                            <img src="${attachment.url}" alt="${attachment.name}" class="message-image">
-                            <div class="attachment-overlay">
-                                <i class="fas fa-search-plus"></i>
+                    messageContent += `
+                        <div class="attachment-container" id="${attachmentId}">
+                            <div class="loading-overlay">
+                                <div class="loading-spinner"></div>
+                                <div class="check-marks hidden">
+                                    <i class="fas fa-check"></i>
+                                    <i class="fas fa-check"></i>
+                                </div>
                             </div>
+                            <img src="${attachment.url}" alt="${attachment.name}" class="message-image"
+                                onload="handleAttachmentLoaded('${attachmentId}')"
+                                onclick="showFullImage('${attachment.url}')">
                         </div>
                     `;
                     break;
                     
                 case 'audio':
-                    attachmentElement.innerHTML = `
-                        <div class="audio-container">
-                            <div class="audio-info">
-                                <i class="fas fa-music"></i>
-                                <span class="audio-name">${attachment.name}</span>
+                    messageContent += `
+                        <div class="attachment-container" id="${attachmentId}">
+                            <div class="loading-overlay">
+                                <div class="loading-spinner"></div>
+                                <div class="check-marks hidden">
+                                    <i class="fas fa-check"></i>
+                                    <i class="fas fa-check"></i>
+                                </div>
                             </div>
-                            <audio controls class="message-audio">
-                                <source src="${attachment.url}" type="audio/mpeg">
-                            </audio>
+                            <div class="message-audio-wrapper">
+                                <audio controls class="message-audio" oncanplay="handleAttachmentLoaded('${attachmentId}')">
+                                    <source src="${attachment.url}" type="audio/mpeg">
+                                </audio>
+                                <div class="audio-info">
+                                    <i class="fas fa-music"></i>
+                                    <span>${attachment.name}</span>
+                                </div>
+                            </div>
                         </div>
                     `;
                     break;
                     
-                case 'file':
-                    attachmentElement.innerHTML = `
-                        <div class="file-container">
-                            <i class="fas fa-file"></i>
-                            <div class="file-info">
-                                <span class="file-name">${attachment.name}</span>
-                                <span class="file-size">${formatFileSize(attachment.size)}</span>
+                default:
+                    messageContent += `
+                        <div class="attachment-container" id="${attachmentId}">
+                            <div class="loading-overlay">
+                                <div class="loading-spinner"></div>
+                                <div class="check-marks hidden">
+                                    <i class="fas fa-check"></i>
+                                    <i class="fas fa-check"></i>
+                                </div>
                             </div>
-                            <a href="${attachment.url}" download="${attachment.name}" class="download-button">
-                                <i class="fas fa-download"></i>
-                            </a>
+                            <div class="message-file-wrapper">
+                                <div class="file-info">
+                                    <i class="fas fa-file"></i>
+                                    <span>${attachment.name}</span>
+                                    <small>${formatFileSize(attachment.size)}</small>
+                                </div>
+                                <a href="${attachment.url}" download="${attachment.name}" 
+                                   class="file-download" onclick="handleAttachmentLoaded('${attachmentId}')">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
                         </div>
                     `;
                     break;
             }
-            
-            contentContainer.appendChild(attachmentElement);
         });
+        messageContent += '</div>';
     }
 
-    // إضافة معلومات الوقت والحالة
-    const messageFooter = document.createElement('div');
-    messageFooter.className = 'message-footer';
-    messageFooter.innerHTML = `
-        <span class="message-time">${formatMessageTime(messageData.timestamp)}</span>
-        ${isSender ? '<i class="fas fa-check-double message-status"></i>' : ''}
+    // إضافة التوقيت
+    messageContent += `
+        <div class="message-time">
+            ${new Date(messageData.timestamp).toLocaleTimeString('ar-EG', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
+        </div>
     `;
-    contentContainer.appendChild(messageFooter);
-    
-    messageElement.appendChild(contentContainer);
+
+    messageElement.innerHTML = messageContent;
     messagesContainer.appendChild(messageElement);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+// دالة معالجة اكتمال تحميل المرفق
+function handleAttachmentLoaded(attachmentId) {
+    const container = document.getElementById(attachmentId);
+    if (container) {
+        const loadingOverlay = container.querySelector('.loading-overlay');
+        const spinner = container.querySelector('.loading-spinner');
+        const checkMarks = container.querySelector('.check-marks');
+        
+        spinner.style.display = 'none';
+        checkMarks.classList.remove('hidden');
+        
+        // إخفاء الطبقة العلوية بعد فترة قصيرة
+        setTimeout(() => {
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 300);
+        }, 1000);
+    }
+}
 // دالة عرض الوسائط في نافذة منبثقة
 function showMediaPreview(url, type) {
     if (type === 'image') {

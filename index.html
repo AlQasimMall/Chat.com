@@ -272,30 +272,137 @@ body {
 }
 
 /* تنسيقات واجهة الاتصال */
+/* تنسيقات واجهة الاتصال المحدثة */
 .call-interface {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
+    background: #000;
     z-index: 1000;
     display: none;
 }
 
 .call-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: white;
 }
 
+/* تنسيق صورة المستخدم */
+.caller-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.7);
+}
+
+/* معلومات المتصل */
+.call-info {
+    position: absolute;
+    top: 20%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    z-index: 2;
+}
+
+.caller-name {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.call-status {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+/* تنسيق أزرار التحكم */
 .call-controls {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
     display: flex;
+    justify-content: center;
     gap: 20px;
-    margin-top: 30px;
+    padding: 20px;
+    z-index: 2;
+}
+
+.control-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.control-button:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.end-call {
+    background: rgba(255, 68, 68, 0.8);
+}
+
+.end-call:hover {
+    background: rgba(255, 68, 68, 1);
+}
+
+/* تنسيق فيديو المكالمة */
+.video-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+.remote-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.local-video {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 120px;
+    height: 160px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* تأثيرات إضافية */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.calling .caller-background {
+    animation: pulse 2s infinite;
 }
 
 .control-button {
@@ -2622,31 +2729,29 @@ audio {
         <!-- واجهة الاتصال -->
         <div id="call-interface" class="call-interface">
             <div class="call-container">
-                <div class="call-header">
-                    <img id="caller-avatar" src="" alt="صورة المتصل" class="caller-avatar">
-                    <h3 id="caller-name" class="caller-name"></h3>
-                    <p id="call-status" class="call-status"></p>
+                <!-- خلفية صورة المستخدم -->
+                <div class="caller-background"></div>
+                
+                <!-- معلومات المتصل -->
+                <div class="call-info">
+                    <h3 id="caller-name" class="caller-name">اسم المستخدم</h3>
+                    <p id="call-status" class="call-status">جارِ الاتصال...</p>
                 </div>
+        
+                <!-- منطقة الفيديو -->
+                <div class="video-container" style="display: none;">
+                    <video id="remote-video" class="remote-video" autoplay playsinline></video>
+                    <video id="local-video" class="local-video" autoplay playsinline muted></video>
+                </div>
+        
+                <!-- أزرار التحكم -->
                 <div class="call-controls">
-                    <button class="control-button toggle-mic" onclick="toggleMic()">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                    <button class="control-button toggle-speaker" onclick="toggleSpeaker()">
-                        <i class="fas fa-volume-up"></i>
-                    </button>
                     <button class="control-button end-call" onclick="endCall()">
                         <i class="fas fa-phone-slash"></i>
                     </button>
-                    <button class="control-button toggle-camera" onclick="toggleCamera()">
-                        <i class="fas fa-video"></i>
-                    </button>
                 </div>
-                <div id="remote-video" class="remote-video"></div>
-                <div id="local-video" class="local-video"></div>
             </div>
         </div>
-    </div>
-
 
     <!-- المكتبات المطلوبة -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
@@ -5342,6 +5447,156 @@ function showFullImage(url) {
     });
 }
 
+
+function showCallInterface(type, userData) {
+    const callInterface = document.getElementById('call-interface');
+    const callerBackground = callInterface.querySelector('.caller-background');
+    const videoContainer = callInterface.querySelector('.video-container');
+    const callStatus = document.getElementById('call-status');
+    const callerName = document.getElementById('caller-name');
+    
+    // تعيين معلومات المستخدم
+    callerName.textContent = userData.username;
+    callerBackground.style.backgroundImage = `url('${userData.avatarUrl}')`;
+    
+    // تحديث حالة الاتصال
+    callStatus.textContent = type === 'video' ? 'مكالمة فيديو...' : 'مكالمة صوتية...';
+    
+    // إظهار/إخفاء منطقة الفيديو
+    videoContainer.style.display = type === 'video' ? 'block' : 'none';
+    
+    // إضافة تأثير النبض
+    callInterface.querySelector('.call-container').classList.add('calling');
+    
+    // إظهار الواجهة
+    callInterface.style.display = 'block';
+}
+
+
+async function showCallInterface(type, userData) {
+    try {
+        const callInterface = document.getElementById('call-interface');
+        if (!callInterface) {
+            throw new Error('عنصر واجهة الاتصال غير موجود');
+        }
+
+        // تعيين معلومات المستخدم بشكل آمن
+        const callerName = document.getElementById('caller-name');
+        const callerBackground = callInterface.querySelector('.caller-background');
+        const videoContainer = callInterface.querySelector('.video-container');
+        const callStatus = document.getElementById('call-status');
+
+        if (callerName && userData) {
+            callerName.textContent = userData.username || 'مستخدم';
+        }
+
+        if (callerBackground && userData.avatarUrl) {
+            callerBackground.style.backgroundImage = `url('${userData.avatarUrl}')`;
+        }
+
+        if (callStatus) {
+            callStatus.textContent = type === 'video' ? 'مكالمة فيديو...' : 'مكالمة صوتية...';
+        }
+
+        if (videoContainer) {
+            videoContainer.style.display = type === 'video' ? 'block' : 'none';
+        }
+
+        // إضافة تأثير النبض
+        const callContainer = callInterface.querySelector('.call-container');
+        if (callContainer) {
+            callContainer.classList.add('calling');
+        }
+
+        // إظهار الواجهة
+        callInterface.style.display = 'block';
+
+    } catch (error) {
+        console.error('خطأ في تهيئة واجهة الاتصال:', error);
+        handleCallError(error);
+    }
+}
+
+// دالة بدء الاتصال المحدثة
+async function startCall(type) {
+    try {
+        if (!currentUser || !currentChatUser) {
+            throw new Error('معلومات المستخدم غير متوفرة');
+        }
+
+        const button = document.querySelector(`.${type}-call`);
+        if (button) {
+            button.classList.add('calling');
+        }
+
+        const hasPermissions = await checkAndRequestPermissions(type);
+        if (!hasPermissions) {
+            if (button) {
+                button.classList.remove('calling');
+            }
+            return;
+        }
+
+        const mediaConfig = {
+            audio: mediaConstraints.audio,
+            video: type === 'video' ? mediaConstraints.video : false
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia(mediaConfig);
+        
+        // نمرر معلومات المستخدم بشكل صحيح
+        await showCallInterface(type, currentChatUser);
+        
+        setupPeerConnection();
+
+        // إرسال عرض المكالمة
+        const callOffer = {
+            type: `${type}-call-offer`,
+            from: currentUser.uid,
+            to: currentChatUser.uid,
+            timestamp: Date.now()
+        };
+
+        await database.ref(`calls/${currentChatUser.uid}`).push(callOffer);
+
+    } catch (error) {
+        console.error(`خطأ في بدء مكالمة ${type}:`, error);
+        if (button) {
+            button.classList.remove('calling');
+        }
+        handleCallError(error);
+    }
+}
+
+// دالة معالجة الأخطاء
+function handleCallError(error) {
+    let errorMessage = 'حدث خطأ في المكالمة';
+    
+    switch(error.name) {
+        case 'NotAllowedError':
+            errorMessage = 'تم رفض الإذن للوصول إلى الكاميرا/الميكروفون';
+            break;
+        case 'NotFoundError':
+            errorMessage = 'لم يتم العثور على كاميرا أو ميكروفون';
+            break;
+        case 'NotReadableError':
+            errorMessage = 'الكاميرا أو الميكروفون مستخدم من قبل تطبيق آخر';
+            break;
+        case 'TypeError':
+            errorMessage = 'معلومات المستخدم غير متوفرة';
+            break;
+        default:
+            errorMessage = error.message || 'حدث خطأ غير معروف';
+    }
+
+    // إظهار رسالة الخطأ للمستخدم
+    Swal.fire({
+        icon: 'error',
+        title: 'خطأ في المكالمة',
+        text: errorMessage,
+        confirmButtonText: 'حسناً'
+    });
+}
 // متغيرات عامة للمكالمات
 let currentCall = null;
 let localStream = null;

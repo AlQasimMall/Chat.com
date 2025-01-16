@@ -2728,6 +2728,7 @@ audio {
 
         <!-- واجهة الاتصال -->
         <div id="call-interface" class="call-interface">
+            <div id="call-status" class="call-status"></div>
             <div class="call-container">
                 <div class="call-header">
                     <img id="caller-avatar" src="" alt="صورة المتصل" class="caller-avatar">
@@ -2984,6 +2985,7 @@ function loadMessages() {
         // تحديث مراقب حالة المصادقة
         auth.onAuthStateChanged(async (user) => {
             if (user) {
+                setupCallListeners(); 
                 const snapshot = await database.ref(`users/${user.uid}`).once('value');
                 const userData = snapshot.val();
                 
@@ -5779,7 +5781,178 @@ function handleCallError(error) {
         confirmButtonText: 'حسناً'
     });
 }
+// إضافة مراقب لإشعارات المكالمات
+function setupCallListeners() {
+    if (!currentUser) return;
+    
+    // مراقبة المكالمات الواردة
+    database.ref(`calls/${currentUser.uid}`).on('child_added', async (snapshot) => {
+        const callData = snapshot.val();
+        
+        if (callData.to === currentUser.uid) {
+            switch(callData.type) {
+                case 'voice-call-offer':
+                case 'video-call-offer':
+                    handleIncomingCall(callData);
+                    break;
+                    
+                case 'call-answered':
+                    handleCallAnswered(callData);
+                    break;
+                    
+                case 'call-rejected':
+                    handleCallRejected(callData);
+                    break;
+                    
+                case 'call-ended':
+                    handleCallEnded(callData);
+                    break;
+            }
+        }
+    });
+}
 
+// معالجة المكالمة الواردة
+async function handleIncomingCall(callData) {
+    const callerSnapshot = await database.ref(`users/${callData.from}`).once('value');
+    const callerData = callerSnapshot.val();
+    
+    if (!callerData) return;
+    
+    const isVideoCall = callData.type === 'video-call-offer';
+    
+    // عرض نافذة المكالمة الواردة
+    const result = await Swal.fire({
+        title: `${callerData.username} يتصل بك`,
+        text: isVideoCall ? 'مكالمة فيديو واردة' : 'مكالمة صوتية واردة',
+        imageUrl: callerData.avatarUrl || '/api/placeholder/45/45',
+        showCancelButton: true,
+        confirmButtonText: 'رد',
+        cancelButtonText: 'رفض',
+        confirmButtonColor: '#4CAF50',
+        cancelButtonColor: '#f44336',
+        showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+        }
+    });
+
+    if (result.isConfirmed) {
+        // الرد على المكالمة
+        await database.ref(`calls/${callData.from}`).push({
+            type: 'call-answered',
+            from: currentUser.uid,
+            to: callData.from,
+            timestamp: Date.now()
+        });
+        
+        // إعداد واجهة المكالمة
+        showCallInterface(isVideoCall ? 'video' : 'voice');
+        setupPeerConnection();
+        
+    } else {
+        // رفض المكالمة
+        await database.ref(`calls/${callData.from}`).push({
+            type: 'call-rejected',
+            from: currentUser.uid,
+            to: callData.from,
+            timestamp: Date.now()
+        });
+    }
+}
+
+// معالجة الرد على المكالمة
+function handleCallAnswered(callData) {
+    const callStatus = document.getElementById('call-status');
+    if (callStatus) {
+        callStatus.textContent = 'تم الرد على المكالمة';
+    }
+    
+    // بدء الاتصال
+    setupWebRTCConnection(callData.from);
+}
+
+// معالجة رفض المكالمة
+function handleCallRejected(callData) {
+    Swal.fire({
+        title: 'تم رفض المكالمة',
+        icon: 'info',
+        timer: 2000,
+        showConfirmButton: false
+    });
+    
+    endCall();
+}
+
+// معالجة إنهاء المكالمة
+function handleCallEnded(callData) {
+    Swal.fire({
+        title: 'تم إنهاء المكالمة',
+        icon: 'info',
+        timer: 2000,
+        showConfirmButton: false
+    });
+    
+    endCall();
+}
+
+// تحسين دالة إعداد اتصال WebRTC
+async function setupWebRTCConnection(remoteUserId) {
+    try {
+        if (!peerConnection) {
+            setupPeerConnection();
+        }
+
+        // إنشاء وإرسال العرض
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        await database.ref(`calls/${remoteUserId}/webrtc`).push({
+            type: 'offer',
+            sdp: offer,
+            from: currentUser.uid
+        });
+
+        // مراقبة الرد
+        database.ref(`calls/${currentUser.uid}/webrtc`).on('child_added', async (snapshot) => {
+            const data = snapshot.val();
+            if (data.type === 'answer' && data.from === remoteUserId) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+            }
+        });
+
+    } catch (error) {
+        console.error('خطأ في إعداد اتصال WebRTC:', error);
+        handleCallError(error);
+    }
+}
+
+// تحديث دالة إنهاء المكالمة
+function endCall() {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+
+    // إغلاق واجهة المكالمة
+    const callInterface = document.getElementById('call-interface');
+    if (callInterface) {
+        callInterface.style.display = 'none';
+    }
+
+    // إزالة جميع المراقبين
+    if (currentChatUser) {
+        database.ref(`calls/${currentChatUser.uid}/webrtc`).off();
+        database.ref(`calls/${currentUser.uid}/webrtc`).off();
+    }
+}
 </script>
 </body>
 </html>

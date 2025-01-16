@@ -84,6 +84,8 @@
 <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<!-- WebRTC adapter -->
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <style>
      :root {
             --primary-color: #7C4DFF;
@@ -5287,27 +5289,88 @@ function showFullImage(url) {
         width: '90%'
     });
 }
-
-// متغيرات للاتصال
-let currentCall = null;
+// متغيرات للاتصال مع إضافة المزيد من التفاصيل
+let currentCall = {
+    id: null,
+    type: null,
+    status: 'idle',
+    startTime: null
+};
 let localStream = null;
 let remoteStream = null;
 let peerConnection = null;
 
-// بدء مكالمة صوتية
+// إعداد تكوين WebRTC مع خوادم STUN و TURN متعددة
+const peerConfiguration = {
+    iceServers: [
+        // خوادم STUN الأساسية
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        
+        // خوادم TURN للنسخ الاحتياطي
+        {
+            urls: 'turn:numb.viagenie.ca',
+            username: 'webrtc@live.com',
+            credential: 'muazkh'
+        },
+        {
+            urls: 'turn:relay1.expressturn.com:3478',
+            username: 'ef4PS7MLMWT8STLJ8B',
+            credential: 'GtKjBbTX9MTD6uJT'
+        }
+    ],
+    iceCandidatePoolSize: 10
+};
+
+// تحسين دالة بدء المكالمة الصوتية
 async function startVoiceCall() {
+    // إضافة حماية للمكالمات المتعددة
+    if (currentCall.status !== 'idle') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'مكالمة نشطة',
+            text: 'هناك مكالمة جارية بالفعل'
+        });
+        return;
+    }
+
+    const button = document.querySelector('.voice-call');
+    button.classList.add('calling');
+    
     try {
+        // التحقق من الأذونات بشكل مفصل
+        const hasPermissions = await checkAndRequestPermissions('voice');
+        if (!hasPermissions) {
+            button.classList.remove('calling');
+            return;
+        }
+
+        // ضبط إعدادات الصوت بشكل أكثر دقة
         localStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: true, 
+            audio: {
+                echoCancellation: { ideal: true },
+                noiseSuppression: { ideal: true },
+                autoGainControl: { ideal: true },
+                channelCount: { ideal: 2 }
+            },
             video: false 
         });
         
         showCallInterface('voice');
-        setupPeerConnection();
+        setupPeerConnection('voice');
         
-        // إرسال عرض المكالمة للمستخدم الآخر
+        // تحديث حالة المكالمة
+        currentCall = {
+            id: `call_${Date.now()}`,
+            type: 'voice',
+            status: 'initiating',
+            startTime: Date.now()
+        };
+        
         const callOffer = {
             type: 'voice-call-offer',
+            callId: currentCall.id,
             from: currentUser.uid,
             to: currentChatUser.uid,
             timestamp: Date.now()
@@ -5317,23 +5380,62 @@ async function startVoiceCall() {
         
     } catch (error) {
         console.error('خطأ في بدء المكالمة:', error);
-        alert('لا يمكن الوصول إلى الميكروفون');
+        handleCallError(error);
+        button.classList.remove('calling');
     }
 }
 
-// بدء مكالمة فيديو
+// تحسين دالة بدء مكالمة الفيديو
 async function startVideoCall() {
+    // إضافة حماية للمكالمات المتعددة
+    if (currentCall.status !== 'idle') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'مكالمة نشطة',
+            text: 'هناك مكالمة جارية بالفعل'
+        });
+        return;
+    }
+
+    const button = document.querySelector('.video-call');
+    button.classList.add('calling');
+    
     try {
+        const hasPermissions = await checkAndRequestPermissions('video');
+        if (!hasPermissions) {
+            button.classList.remove('calling');
+            return;
+        }
+
+        // إعدادات فيديو محسّنة
         localStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: true, 
-            video: true 
+            audio: {
+                echoCancellation: { ideal: true },
+                noiseSuppression: { ideal: true },
+                autoGainControl: { ideal: true }
+            },
+            video: {
+                width: { ideal: 1280, max: 1920 },
+                height: { ideal: 720, max: 1080 },
+                frameRate: { ideal: 30, max: 60 },
+                facingMode: { ideal: 'user' }
+            }
         });
         
         showCallInterface('video');
-        setupPeerConnection();
+        setupPeerConnection('video');
+        
+        // تحديث حالة المكالمة
+        currentCall = {
+            id: `call_${Date.now()}`,
+            type: 'video',
+            status: 'initiating',
+            startTime: Date.now()
+        };
         
         const callOffer = {
             type: 'video-call-offer',
+            callId: currentCall.id,
             from: currentUser.uid,
             to: currentChatUser.uid,
             timestamp: Date.now()
@@ -5343,313 +5445,86 @@ async function startVideoCall() {
         
     } catch (error) {
         console.error('خطأ في بدء مكالمة الفيديو:', error);
-        alert('لا يمكن الوصول إلى الكاميرا أو الميكروفون');
-    }
-}
-// تحديث دالة بدء مكالمة الفيديو
-async function startVideoCall() {
-    const button = document.querySelector('.video-call');
-    button.classList.add('calling');
-    
-    const hasPermissions = await checkAndRequestPermissions('video');
-    if (!hasPermissions) {
-        button.classList.remove('calling');
-        return;
-    }
-
-    try {
-        // ... باقي الكود ...
-    } catch (error) {
-        button.classList.remove('calling');
         handleCallError(error);
-    }
-}
-
-// تحديث دالة بدء المكالمة الصوتية
-async function startVoiceCall() {
-    const button = document.querySelector('.voice-call');
-    button.classList.add('calling');
-    
-    const hasPermissions = await checkAndRequestPermissions('voice');
-    if (!hasPermissions) {
         button.classList.remove('calling');
-        return;
-    }
-
-    try {
-        // ... باقي الكود ...
-    } catch (error) {
-        button.classList.remove('calling');
-        handleCallError(error);
     }
 }
 
-// إضافة دالة لتحديث حالة المستخدم
-function updateUserStatus(status) {
-    const videoButton = document.querySelector('.video-call');
-    const voiceButton = document.querySelector('.voice-call');
-    
-    if (status === 'online') {
-        videoButton.classList.add('available');
-        voiceButton.classList.add('available');
-        videoButton.classList.remove('disabled');
-        voiceButton.classList.remove('disabled');
-    } else {
-        videoButton.classList.remove('available');
-        voiceButton.classList.remove('available');
-        videoButton.classList.add('disabled');
-        voiceButton.classList.add('disabled');
-    }
-}
-
-// إظهار واجهة الاتصال
-function showCallInterface(type) {
-    const callInterface = document.getElementById('call-interface');
-    const callerAvatar = document.getElementById('caller-avatar');
-    const callerName = document.getElementById('caller-name');
-    const callStatus = document.getElementById('call-status');
-    
-    callerAvatar.src = currentChatUser.avatarUrl;
-    callerName.textContent = currentChatUser.username;
-    callStatus.textContent = type === 'voice' ? 'جارِ الاتصال...' : 'جارِ بدء مكالمة فيديو...';
-    
-    document.querySelector('.toggle-camera').style.display = type === 'video' ? 'flex' : 'none';
-    callInterface.style.display = 'block';
-    
-    if (type === 'video' && localStream) {
-        const localVideo = document.getElementById('local-video');
-        localVideo.srcObject = localStream;
-        localVideo.play();
-    }
-}
-
-// التحكم في الميكروفون
-function toggleMic() {
-    if (localStream) {
-        const audioTrack = localStream.getAudioTracks()[0];
-        audioTrack.enabled = !audioTrack.enabled;
-        
-        const micButton = document.querySelector('.toggle-mic');
-        micButton.classList.toggle('muted');
-        micButton.querySelector('i').classList.toggle('fa-microphone');
-        micButton.querySelector('i').classList.toggle('fa-microphone-slash');
-    }
-}
-
-// التحكم في الكاميرا
-function toggleCamera() {
-    if (localStream) {
-        const videoTrack = localStream.getVideoTracks()[0];
-        videoTrack.enabled = !videoTrack.enabled;
-        
-        const cameraButton = document.querySelector('.toggle-camera');
-        cameraButton.classList.toggle('muted');
-        cameraButton.querySelector('i').classList.toggle('fa-video');
-        cameraButton.querySelector('i').classList.toggle('fa-video-slash');
-    }
-}
-
-// إنهاء المكالمة
+// تحسين دالة إنهاء المكالمة
 function endCall() {
+    const duration = currentCall.status !== 'idle' 
+        ? Math.round((Date.now() - currentCall.startTime) / 1000) 
+        : 0;
+
+    // إيقاف التدفقات
     if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
         localStream = null;
     }
     
+    // إغلاق اتصال WebRTC
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
     }
     
+    // إخفاء واجهة المكالمة
     document.getElementById('call-interface').style.display = 'none';
     
     // إرسال إشعار إنهاء المكالمة
     database.ref(`calls/${currentChatUser.uid}`).push({
         type: 'call-ended',
+        callId: currentCall.id,
+        duration: duration,
         from: currentUser.uid,
         timestamp: Date.now()
     });
-}
-// دالة للتحقق من الأذونات وطلبها
-async function checkAndRequestPermissions(mediaType) {
-    try {
-        // التحقق من دعم المتصفح للأذونات
-        if (!navigator.permissions || !navigator.mediaDevices) {
-            throw new Error('المتصفح لا يدعم الوصول إلى الوسائط');
-        }
 
-        let permissions = {
-            audio: false,
-            video: false
-        };
+    // إعادة ضبط حالة المكالمة
+    currentCall = {
+        id: null,
+        type: null,
+        status: 'idle',
+        startTime: null
+    };
 
-        // تحديد الأذونات المطلوبة
-        if (mediaType === 'voice') {
-            permissions.audio = true;
-        } else if (mediaType === 'video') {
-            permissions.audio = true;
-            permissions.video = true;
-        }
-
-        // التحقق من حالة الأذونات
-        const micPermission = await navigator.permissions.query({ name: 'microphone' });
-        if (permissions.video) {
-            const camPermission = await navigator.permissions.query({ name: 'camera' });
-            
-            // إذا تم رفض أي من الأذونات
-            if (micPermission.state === 'denied' || camPermission.state === 'denied') {
-                Swal.fire({
-                    title: 'مطلوب أذونات',
-                    text: 'يرجى السماح بالوصول إلى الكاميرا والميكروفون من إعدادات المتصفح',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'فتح الإعدادات',
-                    cancelButtonText: 'إلغاء'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // توجيه المستخدم إلى إعدادات الأذونات
-                        window.open('chrome://settings/content/camera', '_blank');
-                    }
-                });
-                return false;
-            }
-        } else if (micPermission.state === 'denied') {
-            Swal.fire({
-                title: 'مطلوب أذونات',
-                text: 'يرجى السماح بالوصول إلى الميكروفون من إعدادات المتصفح',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'فتح الإعدادات',
-                cancelButtonText: 'إلغاء'
-            });
-            return false;
-        }
-
-        // طلب الأذونات
-        const stream = await navigator.mediaDevices.getUserMedia(permissions);
-        // إيقاف التدفق مباشرة بعد الحصول على الأذونات
-        stream.getTracks().forEach(track => track.stop());
-        
-        return true;
-    } catch (error) {
-        console.error('خطأ في التحقق من الأذونات:', error);
-        
-        // عرض رسالة خطأ مناسبة للمستخدم
-        Swal.fire({
-            title: 'خطأ في الوصول إلى الوسائط',
-            text: getPermissionErrorMessage(error),
-            icon: 'error',
-            confirmButtonText: 'حسناً'
-        });
-        
-        return false;
-    }
+    // إزالة التأثيرات المرئية
+    document.querySelector('.voice-call')?.classList.remove('calling');
+    document.querySelector('.video-call')?.classList.remove('calling');
 }
 
-// دالة للحصول على رسالة الخطأ المناسبة
-function getPermissionErrorMessage(error) {
-    if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        return 'لم يتم العثور على أجهزة الوسائط (كاميرا/ميكروفون)';
-    } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        return 'تم رفض الإذن للوصول إلى أجهزة الوسائط';
-    } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-        return 'جهاز الوسائط مستخدم من قبل تطبيق آخر';
-    } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
-        return 'لا يمكن العثور على جهاز وسائط يطابق المتطلبات';
-    } else {
-        return 'حدث خطأ غير متوقع في الوصول إلى أجهزة الوسائط';
-    }
-}
-
-// تحديث دالة بدء المكالمة الصوتية
-async function startVoiceCall() {
-    const hasPermissions = await checkAndRequestPermissions('voice');
-    if (!hasPermissions) return;
-
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            },
-            video: false 
-        });
-        
-        showCallInterface('voice');
-        setupPeerConnection();
-        
-        const callOffer = {
-            type: 'voice-call-offer',
-            from: currentUser.uid,
-            to: currentChatUser.uid,
-            timestamp: Date.now()
-        };
-        
-        await database.ref(`calls/${currentChatUser.uid}`).push(callOffer);
-        
-    } catch (error) {
-        console.error('خطأ في بدء المكالمة:', error);
-        handleCallError(error);
-    }
-}
-
-// تحديث دالة بدء مكالمة الفيديو
-async function startVideoCall() {
-    const hasPermissions = await checkAndRequestPermissions('video');
-    if (!hasPermissions) return;
-
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            },
-            video: {
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                facingMode: 'user'
-            }
-        });
-        
-        showCallInterface('video');
-        setupPeerConnection();
-        
-        const callOffer = {
-            type: 'video-call-offer',
-            from: currentUser.uid,
-            to: currentChatUser.uid,
-            timestamp: Date.now()
-        };
-        
-        await database.ref(`calls/${currentChatUser.uid}`).push(callOffer);
-        
-    } catch (error) {
-        console.error('خطأ في بدء مكالمة الفيديو:', error);
-        handleCallError(error);
-    }
-}
-
-// دالة معالجة أخطاء المكالمات
+// دالة معالجة أخطاء المكالمات مع تفاصيل أكثر
 function handleCallError(error) {
-    let errorMessage = 'حدث خطأ في بدء المكالمة';
-    
-    if (error.name === 'NotAllowedError') {
-        errorMessage = 'تم رفض الإذن للوصول إلى الكاميرا/الميكروفون';
-    } else if (error.name === 'NotFoundError') {
-        errorMessage = 'لم يتم العثور على كاميرا أو ميكروفون';
-    } else if (error.name === 'NotReadableError') {
-        errorMessage = 'الكاميرا أو الميكروفون مستخدم من قبل تطبيق آخر';
-    }
+    console.error('خطأ في المكالمة:', error);
+
+    // مسح حالة المكالمة
+    currentCall = {
+        id: null,
+        type: null,
+        status: 'idle',
+        startTime: null
+    };
+
+    const errorMessages = {
+        'NotAllowedError': 'تم رفض الإذن للوصول إلى الكاميرا/الميكروفون',
+        'NotFoundError': 'لم يتم العثور على كاميرا أو ميكروفون',
+        'NotReadableError': 'الكاميرا أو الميكروفون مستخدم من قبل تطبيق آخر',
+        'OverconstrainedError': 'الإعدادات المطلوبة للجهاز غير متوفرة'
+    };
+
+    const errorMessage = errorMessages[error.name] || 'حدث خطأ غير متوقع في المكالمة';
 
     Swal.fire({
         icon: 'error',
         title: 'خطأ في المكالمة',
-        text: errorMessage
+        text: errorMessage,
+        footer: `كود الخطأ: ${error.name}`
     });
-}
 
+    // إعادة تعيين أزرار المكالمة
+    document.querySelector('.voice-call')?.classList.remove('calling');
+    document.querySelector('.video-call')?.classList.remove('calling');
+}
 </script>
 </body>
 </html>

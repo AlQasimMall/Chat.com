@@ -4782,70 +4782,85 @@ function loadMessages(chatId) {
 }
 
 // تحديث دالة معالجة اختيار الملفات
+
+// دالة معالجة اختيار الملفات
 async function handleFileSelection(event, type) {
     const files = Array.from(event.target.files);
-    
-    // عرض منطقة المعاينة
-    document.getElementById('file-preview-area').style.display = 'block';
+    const previewArea = document.getElementById('file-preview-area');
     const container = document.getElementById('selected-files-container');
     
+    if (files.length === 0) return;
+    
+    // إظهار منطقة المعاينة
+    previewArea.style.display = 'block';
+    
     for (const file of files) {
+        // إنشاء عنصر المعاينة
         const preview = document.createElement('div');
-        preview.className = 'file-preview';
+        preview.className = 'selected-file-preview';
         preview.dataset.type = type;
+        
+        // تخزين الملف مباشرة في عنصر DOM
         preview.file = file;
         
-        if (type === 'image') {
-            const reader = new FileReader();
-            reader.onload = function(e) {
+        switch(type) {
+            case 'image':
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.innerHTML = `
+                        <div class="preview-inner">
+                            <img src="${e.target.result}" alt="${file.name}">
+                            <button class="remove-preview" onclick="removeSelectedFile(this)">×</button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+                break;
+                
+            case 'audio':
                 preview.innerHTML = `
-                    <img src="${e.target.result}" alt="${file.name}">
-                    <button class="remove-file" onclick="removeSelectedFile(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <div class="file-name">${file.name}</div>
+                    <div class="preview-inner">
+                        <div class="audio-preview">
+                            <i class="fas fa-music"></i>
+                            <span>${file.name}</span>
+                            <button class="remove-preview" onclick="removeSelectedFile(this)">×</button>
+                        </div>
+                    </div>
                 `;
-            };
-            reader.readAsDataURL(file);
-        } else if (type === 'audio') {
-            preview.innerHTML = `
-                <div class="file-icon">
-                    <i class="fas fa-music"></i>
-                </div>
-                <button class="remove-file" onclick="removeSelectedFile(this)">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="file-name">${file.name}</div>
-            `;
-        } else {
-            preview.innerHTML = `
-                <div class="file-icon">
-                    <i class="fas fa-file"></i>
-                </div>
-                <button class="remove-file" onclick="removeSelectedFile(this)">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="file-name">${file.name}</div>
-            `;
+                break;
+                
+            default:
+                preview.innerHTML = `
+                    <div class="preview-inner">
+                        <div class="file-preview">
+                            <i class="fas fa-file"></i>
+                            <span>${file.name}</span>
+                            <button class="remove-preview" onclick="removeSelectedFile(this)">×</button>
+                        </div>
+                    </div>
+                `;
         }
         
         container.appendChild(preview);
     }
 }
 
-// تحديث دالة إرسال الرسالة
+// دالة إرسال الرسالة مع الملفات
 async function sendMessage(event) {
     event.preventDefault();
+    
     const messageInput = document.getElementById('message-input');
     const message = messageInput.value.trim();
-    const fileElements = document.querySelectorAll('.file-preview');
+    const selectedFiles = Array.from(document.querySelectorAll('.selected-file-preview'));
     
-    if (!message && fileElements.length === 0) return;
+    // التحقق من وجود رسالة أو ملفات
+    if (!message && selectedFiles.length === 0) return;
     
     try {
+        // عرض مؤشر التحميل
         Swal.fire({
             title: 'جاري الإرسال...',
-            text: 'يرجى الانتظار حتى يتم رفع الملفات',
+            text: 'يرجى الانتظار',
             allowOutsideClick: false,
             didOpen: () => {
                 Swal.showLoading();
@@ -4861,33 +4876,42 @@ async function sendMessage(event) {
             attachments: []
         };
 
-        // رفع الملفات
-        for (const element of fileElements) {
-            const file = element.file;
-            const type = element.dataset.type;
-            const fileRef = storage.ref(`chats/${chatId}/${Date.now()}_${file.name}`);
-            
-            // رفع الملف
-            await fileRef.put(file);
-            const url = await fileRef.getDownloadURL();
-            
-            messageData.attachments.push({
-                type: type,
-                url: url,
-                name: file.name,
-                size: file.size
-            });
+        // معالجة الملفات المرفقة
+        if (selectedFiles.length > 0) {
+            for (const preview of selectedFiles) {
+                const file = preview.file;
+                const type = preview.dataset.type;
+                
+                // إنشاء مسار فريد للملف
+                const fileRef = storage.ref(`chats/${chatId}/${Date.now()}_${file.name}`);
+                
+                // رفع الملف
+                await fileRef.put(file);
+                
+                // الحصول على رابط الملف
+                const url = await fileRef.getDownloadURL();
+                
+                // إضافة معلومات الملف إلى المرفقات
+                messageData.attachments.push({
+                    type: type,
+                    url: url,
+                    name: file.name,
+                    size: file.size
+                });
+            }
         }
 
         // حفظ الرسالة في قاعدة البيانات
         await database.ref(`chats/${chatId}/messages`).push(messageData);
         
-        // تنظيف الحقول
+        // تنظيف الحقول بعد الإرسال
         messageInput.value = '';
         document.getElementById('file-preview-area').style.display = 'none';
         document.getElementById('selected-files-container').innerHTML = '';
         
+        // إغلاق مؤشر التحميل
         Swal.close();
+        
     } catch (error) {
         console.error('Error sending message:', error);
         Swal.fire({
@@ -4896,6 +4920,27 @@ async function sendMessage(event) {
             text: 'حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.'
         });
     }
+}
+
+// دالة إزالة الملف المحدد
+function removeSelectedFile(button) {
+    const preview = button.closest('.selected-file-preview');
+    const container = preview.parentElement;
+    preview.remove();
+    
+    // إخفاء منطقة المعاينة إذا لم تعد هناك ملفات
+    if (container.children.length === 0) {
+        document.getElementById('file-preview-area').style.display = 'none';
+    }
+}
+
+// دالة تنسيق حجم الملف
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
 // دالة عرض الرسائل

@@ -1959,6 +1959,152 @@ audio {
     max-width: 90vw !important;
     object-fit: contain !important;
 }
+<style>
+/* تحديث أنماط الرسائل */
+.message {
+    max-width: 75%;
+    margin: 2px 15px;
+    padding: 8px 12px;
+    border-radius: 7.5px;
+    position: relative;
+    word-wrap: break-word;
+    box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+}
+
+/* الرسائل المرسلة */
+.message-sent {
+    background: #e7ffdb; /* لون خلفية الرسائل المرسلة في الواتساب */
+    color: #303030;
+    margin-left: auto;
+    margin-right: 15px;
+    border-top-right-radius: 7.5px;
+    border-bottom-right-radius: 0;
+}
+
+/* الرسائل المستلمة */
+.message-received {
+    background: white;
+    color: #303030;
+    margin-right: auto;
+    margin-left: 15px;
+    border-top-left-radius: 7.5px;
+    border-bottom-left-radius: 0;
+}
+
+/* ذيل الرسالة (السهم) */
+.message-sent:after,
+.message-received:after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: 12px;
+    height: 12px;
+}
+
+.message-sent:after {
+    right: -12px;
+    border-right: 6px solid transparent;
+    border-left: 6px solid #e7ffdb;
+    border-bottom: 6px solid #e7ffdb;
+    border-top: 6px solid transparent;
+}
+
+.message-received:after {
+    left: -12px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid white;
+    border-bottom: 6px solid white;
+    border-top: 6px solid transparent;
+}
+
+/* وقت الرسالة */
+.message-time {
+    font-size: 11px;
+    color: #667781;
+    margin-top: 2px;
+    margin-left: 4px;
+    margin-right: 4px;
+    float: right;
+}
+
+/* تنسيق المحتوى */
+.message-text {
+    font-size: 14.2px;
+    line-height: 19px;
+    margin-right: 50px; /* مساحة للوقت */
+}
+
+/* المرفقات */
+.message-attachment {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.message-image {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+/* الملفات الصوتية */
+.message-audio-wrapper {
+    background: transparent;
+    padding: 5px;
+    border-radius: 6px;
+    margin-top: 5px;
+}
+
+.message-audio {
+    width: 100%;
+    height: 40px;
+    border-radius: 20px;
+}
+
+/* الملفات العامة */
+.message-file-wrapper {
+    background: rgba(0,0,0,0.05);
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-weight: 500;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 12px;
+    color: #667781;
+}
+
+/* علامات حالة الرسالة */
+.message-status {
+    float: right;
+    font-size: 14px;
+    margin-left: 5px;
+    margin-top: 3px;
+    color: #85bff0; /* لون علامات القراءة في الواتساب */
+}
+
+/* حاوية الرسائل */
+.chat-messages {
+    background-color: #efeae2; /* خلفية الواتساب */
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QgRDgEHUL/HpQAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAADZklEQVRo3u2ZTUhUURTH//fe98Y0M6AmFCQhQhAEQR9gm2qRUFZE0aKoXS2CCIMWfUC7Nm3atMsIoRYtgqCIIBJKqEWWUM0igyIMoRKtGnWa9+5p0cw4zevNvPvmpUHzhy/vHc57/3
 
     </style>
 </head>
@@ -2998,13 +3144,7 @@ async function sendMessage(event) {
     if (!message && selectedFiles.length === 0) return;
     
     try {
-        Swal.fire({
-            title: 'جاري الإرسال...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+       
 
         const chatId = getChatId(currentUser.uid, currentChatUser.uid);
         const messageData = {
@@ -4123,14 +4263,7 @@ async function handleFileUpload(event, type) {
     if (!file) return;
 
     try {
-        // عرض مؤشر التحميل
-        Swal.fire({
-            title: 'جاري رفع الملف...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+     
 
         // رفع الملف إلى Firebase Storage
         const storageRef = storage.ref();
@@ -4743,13 +4876,7 @@ async function sendMessage(event) {
     if (!message && selectedFiles.length === 0) return;
     
     try {
-        Swal.fire({
-            title: 'جاري الإرسال...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+       
 
         const chatId = getChatId(currentUser.uid, currentChatUser.uid);
         const messageData = {
@@ -5107,13 +5234,7 @@ async function sendMessage(event) {
     if (!message && selectedFiles.length === 0) return;
     
     try {
-        Swal.fire({
-            title: 'جاري الإرسال...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+       
 
         const chatId = getChatId(currentUser.uid, currentChatUser.uid);
         const messageData = {

@@ -2152,133 +2152,159 @@ audio {
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QgRDgEHUL/HpQAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAADZklEQVRo3u2ZTUhUURTH//fe98Y0M6AmFCQhQhAEQR9gm2qRUFZE0aKoXS2CCIMWfUC7Nm3atMsIoRYtgqCIIBJKqEWWUM0igyIMoRKtGnWa9+5p0cw4zevNvPvmpUHzhy/vHc57/3
 }
 
-/* أزرار الاتصال في الهيدر */
+/* تنسيق أزرار الاتصال */
+.call-buttons {
+    display: flex;
+    gap: 8px;
+    margin-right: 12px;
+}
+
 .call-button {
-    background: transparent;
-    border: none;
-    color: white;
     width: 40px;
     height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    margin-right: 8px;
-    transition: all 0.3s ease;
-}
-
-.call-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* واجهة الاتصال */
-.call-interface {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.95);
-    display: none;
-    z-index: 9999;
-    direction: ltr;
-}
-
-.call-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 2rem;
-    color: white;
-}
-
-.call-header {
-    text-align: center;
-    margin-top: 2rem;
-}
-
-.caller-avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    margin-bottom: 1rem;
-    border: 3px solid white;
-}
-
-.caller-name {
-    font-size: 24px;
-    margin-bottom: 0.5rem;
-}
-
-.call-status {
-    font-size: 16px;
-    opacity: 0.8;
-}
-
-.call-controls {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.control-button {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
     border: none;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
     cursor: pointer;
     transition: all 0.3s ease;
-}
-
-.toggle-mic, .toggle-speaker, .toggle-camera {
-    background: rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
     color: white;
 }
 
-.end-call {
-    background: #ff4444;
-    color: white;
-}
-
-.control-button:hover {
-    transform: scale(1.1);
-}
-
-.control-button.muted {
-    background: #ff4444;
-}
-
-.remote-video {
+/* تأثير الخلفية المتحركة */
+.call-button::before {
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: -1;
-    background: #111;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0);
+    border-radius: 50%;
+    transition: transform 0.3s ease;
 }
 
-.local-video {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 200px;
-    height: 150px;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 2px solid white;
-    background: #222;
+.call-button:hover::before {
+    transform: scale(1);
 }
+
+/* أنماط زر مكالمة الفيديو */
+.video-call {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+}
+
+.video-call:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+}
+
+/* أنماط زر المكالمة الصوتية */
+.voice-call {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+}
+
+.voice-call:hover {
+    background: linear-gradient(135deg, #1976D2, #1565C0);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+}
+
+/* تأثير النقر */
+.call-button:active {
+    transform: scale(0.95);
+}
+
+/* أيقونات الاتصال */
+.call-button i {
+    font-size: 18px;
+    position: relative;
+    z-index: 2;
+}
+
+/* تنسيق علامة الحالة */
+.call-button::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4CAF50;
+    top: 4px;
+    right: 4px;
+    border: 2px solid white;
+    display: none;
+}
+
+.call-button.available::after {
+    display: block;
+}
+
+/* تأثير النبض عند الاتصال */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    }
+}
+
+.call-button.calling {
+    animation: pulse 1.5s infinite;
+}
+
+/* تنسيقات حالة عدم التوفر */
+.call-button.disabled {
+    background: #9e9e9e;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.call-button.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* تنسيق القائمة المنسدلة وتحسين موقعها */
+.menu-trigger {
+    margin-right: 8px;
+}
+
+/* تحسين التجاوب مع الشاشات الصغيرة */
+@media (max-width: 480px) {
+    .call-buttons {
+        gap: 4px;
+        margin-right: 8px;
+    }
+    
+    .call-button {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .call-button i {
+        font-size: 16px;
+    }
+}
+
     </style>
 </head>
 <body>
+<!-- أذونات الوسائط -->
+<meta name="permissions-policy" content="microphone=*, camera=*">
     <!-- واجهة تسجيل الدخول -->
     <div class="container">
         <div id="auth-container" class="auth-container">
@@ -5320,6 +5346,61 @@ async function startVideoCall() {
         alert('لا يمكن الوصول إلى الكاميرا أو الميكروفون');
     }
 }
+// تحديث دالة بدء مكالمة الفيديو
+async function startVideoCall() {
+    const button = document.querySelector('.video-call');
+    button.classList.add('calling');
+    
+    const hasPermissions = await checkAndRequestPermissions('video');
+    if (!hasPermissions) {
+        button.classList.remove('calling');
+        return;
+    }
+
+    try {
+        // ... باقي الكود ...
+    } catch (error) {
+        button.classList.remove('calling');
+        handleCallError(error);
+    }
+}
+
+// تحديث دالة بدء المكالمة الصوتية
+async function startVoiceCall() {
+    const button = document.querySelector('.voice-call');
+    button.classList.add('calling');
+    
+    const hasPermissions = await checkAndRequestPermissions('voice');
+    if (!hasPermissions) {
+        button.classList.remove('calling');
+        return;
+    }
+
+    try {
+        // ... باقي الكود ...
+    } catch (error) {
+        button.classList.remove('calling');
+        handleCallError(error);
+    }
+}
+
+// إضافة دالة لتحديث حالة المستخدم
+function updateUserStatus(status) {
+    const videoButton = document.querySelector('.video-call');
+    const voiceButton = document.querySelector('.voice-call');
+    
+    if (status === 'online') {
+        videoButton.classList.add('available');
+        voiceButton.classList.add('available');
+        videoButton.classList.remove('disabled');
+        voiceButton.classList.remove('disabled');
+    } else {
+        videoButton.classList.remove('available');
+        voiceButton.classList.remove('available');
+        videoButton.classList.add('disabled');
+        voiceButton.classList.add('disabled');
+    }
+}
 
 // إظهار واجهة الاتصال
 function showCallInterface(type) {
@@ -5387,6 +5468,185 @@ function endCall() {
         type: 'call-ended',
         from: currentUser.uid,
         timestamp: Date.now()
+    });
+}
+// دالة للتحقق من الأذونات وطلبها
+async function checkAndRequestPermissions(mediaType) {
+    try {
+        // التحقق من دعم المتصفح للأذونات
+        if (!navigator.permissions || !navigator.mediaDevices) {
+            throw new Error('المتصفح لا يدعم الوصول إلى الوسائط');
+        }
+
+        let permissions = {
+            audio: false,
+            video: false
+        };
+
+        // تحديد الأذونات المطلوبة
+        if (mediaType === 'voice') {
+            permissions.audio = true;
+        } else if (mediaType === 'video') {
+            permissions.audio = true;
+            permissions.video = true;
+        }
+
+        // التحقق من حالة الأذونات
+        const micPermission = await navigator.permissions.query({ name: 'microphone' });
+        if (permissions.video) {
+            const camPermission = await navigator.permissions.query({ name: 'camera' });
+            
+            // إذا تم رفض أي من الأذونات
+            if (micPermission.state === 'denied' || camPermission.state === 'denied') {
+                Swal.fire({
+                    title: 'مطلوب أذونات',
+                    text: 'يرجى السماح بالوصول إلى الكاميرا والميكروفون من إعدادات المتصفح',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'فتح الإعدادات',
+                    cancelButtonText: 'إلغاء'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // توجيه المستخدم إلى إعدادات الأذونات
+                        window.open('chrome://settings/content/camera', '_blank');
+                    }
+                });
+                return false;
+            }
+        } else if (micPermission.state === 'denied') {
+            Swal.fire({
+                title: 'مطلوب أذونات',
+                text: 'يرجى السماح بالوصول إلى الميكروفون من إعدادات المتصفح',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'فتح الإعدادات',
+                cancelButtonText: 'إلغاء'
+            });
+            return false;
+        }
+
+        // طلب الأذونات
+        const stream = await navigator.mediaDevices.getUserMedia(permissions);
+        // إيقاف التدفق مباشرة بعد الحصول على الأذونات
+        stream.getTracks().forEach(track => track.stop());
+        
+        return true;
+    } catch (error) {
+        console.error('خطأ في التحقق من الأذونات:', error);
+        
+        // عرض رسالة خطأ مناسبة للمستخدم
+        Swal.fire({
+            title: 'خطأ في الوصول إلى الوسائط',
+            text: getPermissionErrorMessage(error),
+            icon: 'error',
+            confirmButtonText: 'حسناً'
+        });
+        
+        return false;
+    }
+}
+
+// دالة للحصول على رسالة الخطأ المناسبة
+function getPermissionErrorMessage(error) {
+    if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        return 'لم يتم العثور على أجهزة الوسائط (كاميرا/ميكروفون)';
+    } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        return 'تم رفض الإذن للوصول إلى أجهزة الوسائط';
+    } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        return 'جهاز الوسائط مستخدم من قبل تطبيق آخر';
+    } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
+        return 'لا يمكن العثور على جهاز وسائط يطابق المتطلبات';
+    } else {
+        return 'حدث خطأ غير متوقع في الوصول إلى أجهزة الوسائط';
+    }
+}
+
+// تحديث دالة بدء المكالمة الصوتية
+async function startVoiceCall() {
+    const hasPermissions = await checkAndRequestPermissions('voice');
+    if (!hasPermissions) return;
+
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            },
+            video: false 
+        });
+        
+        showCallInterface('voice');
+        setupPeerConnection();
+        
+        const callOffer = {
+            type: 'voice-call-offer',
+            from: currentUser.uid,
+            to: currentChatUser.uid,
+            timestamp: Date.now()
+        };
+        
+        await database.ref(`calls/${currentChatUser.uid}`).push(callOffer);
+        
+    } catch (error) {
+        console.error('خطأ في بدء المكالمة:', error);
+        handleCallError(error);
+    }
+}
+
+// تحديث دالة بدء مكالمة الفيديو
+async function startVideoCall() {
+    const hasPermissions = await checkAndRequestPermissions('video');
+    if (!hasPermissions) return;
+
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            },
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: 'user'
+            }
+        });
+        
+        showCallInterface('video');
+        setupPeerConnection();
+        
+        const callOffer = {
+            type: 'video-call-offer',
+            from: currentUser.uid,
+            to: currentChatUser.uid,
+            timestamp: Date.now()
+        };
+        
+        await database.ref(`calls/${currentChatUser.uid}`).push(callOffer);
+        
+    } catch (error) {
+        console.error('خطأ في بدء مكالمة الفيديو:', error);
+        handleCallError(error);
+    }
+}
+
+// دالة معالجة أخطاء المكالمات
+function handleCallError(error) {
+    let errorMessage = 'حدث خطأ في بدء المكالمة';
+    
+    if (error.name === 'NotAllowedError') {
+        errorMessage = 'تم رفض الإذن للوصول إلى الكاميرا/الميكروفون';
+    } else if (error.name === 'NotFoundError') {
+        errorMessage = 'لم يتم العثور على كاميرا أو ميكروفون';
+    } else if (error.name === 'NotReadableError') {
+        errorMessage = 'الكاميرا أو الميكروفون مستخدم من قبل تطبيق آخر';
+    }
+
+    Swal.fire({
+        icon: 'error',
+        title: 'خطأ في المكالمة',
+        text: errorMessage
     });
 }
 

@@ -1,4 +1,4 @@
- <meta charset="UTF-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="description" content="تطبيق محادثة فوري للتواصل مع الأصدقاء">
 <meta name="keywords" content="محادثة, دردشة, تواصل اجتماعي, شات">
@@ -5772,31 +5772,25 @@ async function startCall(type) {
     }
 }
 
-// تحسين دالة معالجة الأخطاء
+// تحديث دالة handleCallError
 function handleCallError(error) {
-    let errorMessage = 'حدث خطأ في بدء المكالمة';
+    console.error('Call error:', error);
     
-    switch(error.name) {
-        case 'NotAllowedError':
-            errorMessage = 'تم رفض الإذن للوصول إلى الكاميرا/الميكروفون';
-            break;
-        case 'NotFoundError':
-            errorMessage = 'لم يتم العثور على كاميرا أو ميكروفون';
-            break;
-        case 'NotReadableError':
-            errorMessage = 'الكاميرا أو الميكروفون مستخدم من قبل تطبيق آخر';
-            break;
-        case 'TypeError':
-            errorMessage = 'معلومات المستخدم غير متوفرة';
-            break;
+    let errorMessage = 'حدث خطأ في المكالمة';
+    if (error.name === 'NotAllowedError') {
+        errorMessage = 'يرجى السماح بالوصول إلى الكاميرا والميكروفون';
+    } else if (error.name === 'NotSupportedError') {
+        errorMessage = 'المتصفح لا يدعم هذه الميزة';
     }
-
+    
     Swal.fire({
         icon: 'error',
         title: 'خطأ في المكالمة',
-        text: errorMessage,
-        confirmButtonText: 'حسناً'
+        text: errorMessage
     });
+    
+    // تنظيف حالة المكالمة
+    endCall();
 }
 // إضافة مراقب لإشعارات المكالمات
 function setupCallListeners() {
@@ -5977,11 +5971,11 @@ function endCall() {
     }
 }
 
-// إضافة متغيرات الأصوات في بداية الملف
+// تحديث روابط الملفات الصوتية لاستخدام موارد موجودة
 const callSounds = {
-    ringback: new Audio('https://raw.githubusercontent.com/sinch/rtc-reference-applications/master/resources/sounds/ringback.wav'),
-    ringtone: new Audio('https://raw.githubusercontent.com/sinch/rtc-reference-applications/master/resources/sounds/ringtone.wav'),
-    callEnd: new Audio('https://raw.githubusercontent.com/sinch/rtc-reference-applications/master/resources/sounds/hangup.wav')
+    ringback: new Audio('/api/placeholder/audio/ringback.wav'),
+    ringtone: new Audio('/api/placeholder/audio/ringtone.wav'),
+    callEnd: new Audio('/api/placeholder/audio/hangup.wav')
 };
 
 // دوال التحكم بالأصوات
@@ -6078,6 +6072,44 @@ async function endCall() {
             from: currentUser.uid,
             timestamp: Date.now()
         });
+    }
+}
+
+// إضافة دالة toggleSpeaker
+function toggleSpeaker() {
+    const button = document.querySelector('.toggle-speaker');
+    if (button) {
+        const isSpeakerOn = button.classList.toggle('active');
+        const icon = button.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('fa-volume-up');
+            icon.classList.toggle('fa-volume-mute');
+        }
+        // تفعيل/تعطيل مكبر الصوت هنا
+        if (remoteStream) {
+            const audioElement = document.querySelector('audio');
+            if (audioElement) {
+                audioElement.setSinkId(isSpeakerOn ? 'default' : 'speaker');
+            }
+        }
+    }
+}
+
+// إضافة دالة toggleMic
+function toggleMic() {
+    if (!localStream) return;
+    const audioTrack = localStream.getAudioTracks()[0];
+    if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        const button = document.querySelector('.toggle-mic');
+        if (button) {
+            button.classList.toggle('muted');
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-microphone');
+                icon.classList.toggle('fa-microphone-slash');
+            }
+        }
     }
 }
 

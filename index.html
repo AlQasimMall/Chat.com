@@ -2981,30 +2981,36 @@ function loadMessages() {
             });
         }
 
-        // تحديث مراقب حالة المصادقة
         auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                setupCallListeners(); 
-                const snapshot = await database.ref(`users/${user.uid}`).once('value');
-                const userData = snapshot.val();
-                
-                currentUser = {
-                    uid: user.uid,
-                    username: userData.username,
-                    userId: userData.userId,
-                    avatarUrl: userData.avatarUrl || '/api/placeholder/45/45'
-                };
-                
-                showUsersList();
-            } else {
-                document.getElementById('chat-container').style.display = 'none';
-                document.getElementById('users-container').style.display = 'none';
-                document.getElementById('auth-container').style.display = 'block';
-                showLogin();
+            try {
+                if (user) {
+                    const snapshot = await database.ref(`users/${user.uid}`).once('value');
+                    const userData = snapshot.val();
+                    
+                    if (userData) {
+                        currentUser = {
+                            uid: user.uid,
+                            username: userData.username,
+                            userId: userData.userId,
+                            email: user.email,
+                            avatarUrl: userData.avatarUrl || defaultAvatar
+                        };
+                        
+                        showUsersList();
+                        initializeUI();
+                        setupCallListeners();
+                    }
+                } else {
+                    currentUser = null;
+                    document.getElementById('chat-container').style.display = 'none';
+                    document.getElementById('users-container').style.display = 'none';
+                    document.getElementById('auth-container').style.display = 'block';
+                    showLogin();
+                }
+            } catch (error) {
+                console.error('Error in auth state change:', error);
             }
         });
-
-        // [باقي الوظائف السابقة مثل login, showLogin, showRegistration, logout]
 
         // إظهار نموذج التسجيل
         function showRegistration() {
@@ -3722,23 +3728,62 @@ async function checkFriendshipStatus(targetUserId) {
         return 'error';
     }
 }
-
-// دالة تحميل طلبات الصداقة
-async function loadFriendRequests() {
-    try {
-        const requestsSnapshot = await database.ref(`friendRequests/${currentUser.uid}`).once('value');
-        const requests = requestsSnapshot.val() || {};
-        
-        // عرض عدد الطلبات المعلقة
-        const pendingRequests = Object.values(requests).filter(req => req.status === 'pending');
-        
-        return pendingRequests;
-    } catch (error) {
-        console.error('خطأ في تحميل طلبات الصداقة:', error);
-        return [];
+// تحديث دالة طلبات الصداقة
+function loadFriendRequests() {
+    if (!currentUser?.uid) {
+        console.log('No user logged in');
+        return Promise.resolve([]);
     }
+    
+    return database.ref(`friendRequests/${currentUser.uid}`)
+        .once('value')
+        .then(snapshot => {
+            const requests = snapshot.val() || {};
+            return Object.values(requests)
+                .filter(req => req.status === 'pending');
+        })
+        .catch(error => {
+            console.error('Error loading friend requests:', error);
+            return [];
+        });
 }
 
+
+let firebaseApp;
+try {
+    // تحقق مما إذا كان Firebase مهيأ بالفعل
+    if (!firebase.apps.length) {
+        firebaseApp = firebase.initializeApp(firebaseConfig);
+    } else {
+        firebaseApp = firebase.app();
+    }
+    
+    const auth = firebase.auth();
+    const database = firebase.database();
+    const storage = firebase.storage();
+    
+} catch (error) {
+    console.error('Error initializing Firebase:', error);
+}
+// تحديث دالة الاستماع لطلبات الصداقة
+function listenToFriendRequests() {
+    if (!currentUser?.uid) {
+        console.log('Cannot listen for friend requests - no user logged in');
+        return;
+    }
+    
+    database.ref(`friendRequests/${currentUser.uid}`).on('child_added', 
+        snapshot => {
+            const request = snapshot.val();
+            if (request?.status === 'pending') {
+                loadUsers();
+            }
+        },
+        error => {
+            console.error('Error in friend requests listener:', error);
+        }
+    );
+}
 // دالة تحميل قائمة الأصدقاء
 async function loadFriendsList() {
     try {

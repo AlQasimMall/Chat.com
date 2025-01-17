@@ -5569,9 +5569,15 @@ function showPermissionDialog(type) {
 // دالة بدء المكالمة (صوت/فيديو)
 async function startCall(type) {
     const button = document.querySelector(`.${type}-call`);
+    if (!button) return;
+    
     button.classList.add('calling');
 
     try {
+        if (!currentUser || !currentChatUser) {
+            throw new Error('معلومات المستخدم غير متوفرة');
+        }
+
         const hasPermissions = await checkAndRequestPermissions(type);
         if (!hasPermissions) {
             button.classList.remove('calling');
@@ -5587,15 +5593,23 @@ async function startCall(type) {
         showCallInterface(type);
         setupPeerConnection();
 
-        await database.ref(`calls/${currentChatUser.uid}`).push({
+        // إضافة صوت الرنين للمتصل
+        callAudio.startRingback();
+
+        // إرسال عرض المكالمة
+        const callOffer = {
             type: `${type}-call-offer`,
             from: currentUser.uid,
             to: currentChatUser.uid,
             timestamp: Date.now()
-        });
+        };
+
+        await database.ref(`calls/${currentChatUser.uid}/active`).set(callOffer);
 
     } catch (error) {
+        console.error(`خطأ في بدء مكالمة ${type}:`, error);
         button.classList.remove('calling');
+        callAudio.stopAll();
         handleCallError(error);
     }
 }
@@ -5718,7 +5732,6 @@ async function startCall(type) {
     button.classList.add('calling');
 
     try {
-        // التحقق من توفر المستخدم الحالي والمستخدم المتصل به
         if (!currentUser || !currentChatUser) {
             throw new Error('معلومات المستخدم غير متوفرة');
         }
@@ -5738,6 +5751,9 @@ async function startCall(type) {
         showCallInterface(type);
         setupPeerConnection();
 
+        // إضافة صوت الرنين للمتصل
+        callAudio.startRingback();
+
         // إرسال عرض المكالمة
         const callOffer = {
             type: `${type}-call-offer`,
@@ -5746,11 +5762,12 @@ async function startCall(type) {
             timestamp: Date.now()
         };
 
-        await database.ref(`calls/${currentChatUser.uid}`).push(callOffer);
+        await database.ref(`calls/${currentChatUser.uid}/active`).set(callOffer);
 
     } catch (error) {
         console.error(`خطأ في بدء مكالمة ${type}:`, error);
         button.classList.remove('calling');
+        callAudio.stopAll();
         handleCallError(error);
     }
 }
@@ -5785,27 +5802,33 @@ function handleCallError(error) {
 function setupCallListeners() {
     if (!currentUser) return;
     
-    // مراقبة المكالمات الواردة
-    database.ref(`calls/${currentUser.uid}`).on('child_added', async (snapshot) => {
+    // مراقبة المكالمات النشطة
+    database.ref(`calls/${currentUser.uid}/active`).on('value', async (snapshot) => {
         const callData = snapshot.val();
         
-        if (callData.to === currentUser.uid) {
+        if (callData && callData.to === currentUser.uid) {
             switch(callData.type) {
                 case 'voice-call-offer':
                 case 'video-call-offer':
                     handleIncomingCall(callData);
                     break;
-                    
-                case 'call-answered':
-                    handleCallAnswered(callData);
+            }
+        }
+    });
+
+    // مراقبة حالة المكالمة
+    database.ref(`calls/${currentUser.uid}/status`).on('value', (snapshot) => {
+        const status = snapshot.val();
+        if (status) {
+            switch(status.type) {
+                case 'answered':
+                    handleCallAnswered(status);
                     break;
-                    
-                case 'call-rejected':
-                    handleCallRejected(callData);
+                case 'rejected':
+                    handleCallRejected(status);
                     break;
-                    
-                case 'call-ended':
-                    handleCallEnded(callData);
+                case 'ended':
+                    handleCallEnded(status);
                     break;
             }
         }
@@ -5953,6 +5976,112 @@ function endCall() {
         database.ref(`calls/${currentUser.uid}/webrtc`).off();
     }
 }
+
+// إضافة متغيرات الأصوات في بداية الملف
+const callSounds = {
+    ringback: new Audio('https://raw.githubusercontent.com/sinch/rtc-reference-applications/master/resources/sounds/ringback.wav'),
+    ringtone: new Audio('https://raw.githubusercontent.com/sinch/rtc-reference-applications/master/resources/sounds/ringtone.wav'),
+    callEnd: new Audio('https://raw.githubusercontent.com/sinch/rtc-reference-applications/master/resources/sounds/hangup.wav')
+};
+
+// دوال التحكم بالأصوات
+const callAudio = {
+    startRingback() {
+        callSounds.ringback.loop = true;
+        callSounds.ringback.play().catch(console.error);
+    },
+
+    startRingtone() {
+        callSounds.ringtone.loop = true;
+        callSounds.ringtone.play().catch(console.error);
+    },
+
+    stopAll() {
+        Object.values(callSounds).forEach(sound => {
+            sound.pause();
+            sound.currentTime = 0;
+        });
+    }
+};
+async function handleIncomingCall(callData) {
+    const callerSnapshot = await database.ref(`users/${callData.from}`).once('value');
+    const callerData = callerSnapshot.val();
+    
+    if (!callerData) return;
+    
+    const isVideoCall = callData.type === 'video-call-offer';
+    
+    // تشغيل نغمة الرنين
+    callAudio.startRingtone();
+    
+    const result = await Swal.fire({
+        title: `${callerData.username} يتصل بك`,
+        text: isVideoCall ? 'مكالمة فيديو واردة' : 'مكالمة صوتية واردة',
+        imageUrl: callerData.avatarUrl || '/api/placeholder/45/45',
+        showCancelButton: true,
+        confirmButtonText: 'رد',
+        cancelButtonText: 'رفض',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    });
+
+    // إيقاف نغمة الرنين
+    callAudio.stopAll();
+
+    if (result.isConfirmed) {
+        // الرد على المكالمة
+        await database.ref(`calls/${callData.from}/status`).set({
+            type: 'answered',
+            from: currentUser.uid,
+            timestamp: Date.now()
+        });
+        
+        showCallInterface(isVideoCall ? 'video' : 'voice');
+        setupPeerConnection();
+        
+    } else {
+        // رفض المكالمة
+        await database.ref(`calls/${callData.from}/status`).set({
+            type: 'rejected',
+            from: currentUser.uid,
+            timestamp: Date.now()
+        });
+    }
+
+    // مسح المكالمة النشطة
+    await database.ref(`calls/${currentUser.uid}/active`).remove();
+}
+async function endCall() {
+    callAudio.stopAll();
+    callSounds.callEnd.play().catch(console.error);
+
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+
+    const callInterface = document.getElementById('call-interface');
+    if (callInterface) {
+        callInterface.style.display = 'none';
+    }
+
+    // مسح بيانات المكالمة
+    if (currentChatUser) {
+        await database.ref(`calls/${currentChatUser.uid}/active`).remove();
+        await database.ref(`calls/${currentChatUser.uid}/status`).set({
+            type: 'ended',
+            from: currentUser.uid,
+            timestamp: Date.now()
+        });
+    }
+}
+
+
 </script>
 </body>
 </html>

@@ -2,9 +2,9 @@
     "name": ".... ",
     "short_name": "....",
     "description": "تطبيق محادثة فوري للتواصل مع الأصدقاء",
-    "start_url": "https://alqasimmall.github.io/Chat.com/",
+    "start_url": "/Chat.com/",
     "id": "https://alqasimmall.github.io/Chat.com/",
-    "scope": "https://alqasimmall.github.io/Chat.com/",
+    "scope": "/Chat.com/",
     "display": "standalone",
     "display_override": ["standalone", "minimal-ui", "fullscreen"],
     "orientation": "portrait-primary",
@@ -95,6 +95,9 @@
             "text": "text",
             "url": "url"
         }
-    }
+    },
+    "resources": [
+        "/Chat.com/sounds/*"
+    ]
 }
 

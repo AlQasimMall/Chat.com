@@ -5501,13 +5501,11 @@ let localStream = null;
 let remoteStream = null;
 let peerConnection = null;
 
+// تكوين WebRTC
 const RTCConfiguration = {
     iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
-    ],
-    iceCandidatePoolSize: 10
+        { urls: 'stun:stun.l.google.com:19302' }
+    ]
 };
 
 // إعدادات الوسائط
@@ -6240,163 +6238,6 @@ function setupCallListeners() {
     });
 }
 
-
-// تحديث تكوين WebRTC
-
-
-// تحديث دالة بدء المكالمة
-async function startCall(type) {
-    try {
-        if (!currentUser || !currentChatUser) {
-            throw new Error('معلومات المستخدم غير متوفرة');
-        }
-
-        // الحصول على الأذونات والوسائط المحلية
-        const mediaConstraints = {
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            },
-            video: type === 'video' ? true : false
-        };
-
-        // الحصول على الوسائط المحلية
-        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        
-        // إنشاء اتصال WebRTC
-        peerConnection = new RTCPeerConnection(RTCConfiguration);
-
-        // إضافة المسارات المحلية
-        localStream.getTracks().forEach(track => {
-            peerConnection.addTrack(track, localStream);
-        });
-
-        // إعداد مراقبة المسارات البعيدة
-        peerConnection.ontrack = handleRemoteTrack;
-
-        // إنشاء وإرسال العرض
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-
-        // إرسال العرض للمستخدم الآخر
-        await database.ref(`calls/${currentChatUser.uid}/webrtc`).set({
-            type: 'offer',
-            offer: {
-                type: offer.type,
-                sdp: offer.sdp
-            },
-            from: currentUser.uid
-        });
-
-        // مراقبة الإجابة والمرشحين
-        setupCallListeners();
-
-        // إظهار واجهة المكالمة
-        showCallInterface(type);
-
-    } catch (error) {
-        console.error('Error starting call:', error);
-        handleCallError(error);
-    }
-}
-
-// معالجة المسارات البعيدة
-function handleRemoteTrack(event) {
-    const remoteStream = event.streams[0];
-    const remoteVideo = document.getElementById('remote-video');
-    const remoteAudio = document.getElementById('remote-audio');
-
-    if (event.track.kind === 'video' && remoteVideo) {
-        remoteVideo.srcObject = remoteStream;
-    } 
-    if (event.track.kind === 'audio' && remoteAudio) {
-        remoteAudio.srcObject = remoteStream;
-    }
-}
-
-// معالجة الرد على المكالمة
-async function handleAcceptCall(callData) {
-    try {
-        const mediaConstraints = {
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            },
-            video: callData.type.includes('video')
-        };
-
-        // الحصول على الوسائط المحلية
-        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        
-        // إنشاء اتصال WebRTC
-        peerConnection = new RTCPeerConnection(RTCConfiguration);
-
-        // إضافة المسارات المحلية
-        localStream.getTracks().forEach(track => {
-            peerConnection.addTrack(track, localStream);
-        });
-
-        // إعداد مراقبة المسارات البعيدة
-        peerConnection.ontrack = handleRemoteTrack;
-
-        // قراءة العرض وتعيينه
-        const callSnapshot = await database.ref(`calls/${currentUser.uid}/webrtc`).get();
-        const offerData = callSnapshot.val();
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offerData.offer));
-
-        // إنشاء وإرسال الإجابة
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-
-        // إرسال الإجابة للمتصل
-        await database.ref(`calls/${callData.from}/webrtc/answer`).set({
-            type: answer.type,
-            sdp: answer.sdp,
-            from: currentUser.uid
-        });
-
-        // مراقبة المرشحين
-        setupIceCandidateHandling();
-
-        // إظهار واجهة المكالمة
-        showCallInterface(callData.type.includes('video') ? 'video' : 'voice');
-
-    } catch (error) {
-        console.error('Error accepting call:', error);
-        handleCallError(error);
-    }
-}
-
-// إعداد معالجة مرشحي ICE
-function setupIceCandidateHandling() {
-    if (!peerConnection || !currentChatUser) return;
-
-    // إرسال المرشحين المحليين
-    peerConnection.onicecandidate = event => {
-        if (event.candidate) {
-            database.ref(`calls/${currentChatUser.uid}/candidates/${currentUser.uid}`).push({
-                candidate: event.candidate.toJSON()
-            });
-        }
-    };
-
-    // مراقبة المرشحين البعيدين
-    const remoteUid = currentChatUser.uid;
-    database.ref(`calls/${currentUser.uid}/candidates/${remoteUid}`).on('child_added', 
-        async snapshot => {
-            try {
-                const data = snapshot.val();
-                if (data.candidate) {
-                    await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-                }
-            } catch (error) {
-                console.error('Error adding ICE candidate:', error);
-            }
-        }
-    );
-}
 
 
 </script>

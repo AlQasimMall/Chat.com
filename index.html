@@ -6544,6 +6544,205 @@ async function endCall() {
         console.error('خطأ في إنهاء المكالمة:', error);
     }
 }
+
+if ('serviceWorker' in navigator && 'Notification' in window) {
+    window.addEventListener('load', async () => {
+        try {
+            const registration = await navigator.serviceWorker.register('/service-worker.js');
+            console.log('ServiceWorker registered');
+
+            // طلب إذن الإشعارات
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                // تفعيل الإشعارات في Firebase
+                const messaging = firebase.messaging();
+                const currentToken = await messaging.getToken();
+                
+                if (currentToken) {
+                    // تحديث التوكن في قاعدة البيانات
+                    if (currentUser) {
+                        await database.ref(`users/${currentUser.uid}/notificationToken`).set(currentToken);
+                    }
+                }
+            }
+
+            // إعداد مستمع للمكالمات في الخلفية
+            if (registration.active) {
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data.type === 'ANSWER_CALL') {
+                        handleIncomingCall(event.data.callData);
+                    } else if (event.data.type === 'END_CALL') {
+                        endCall();
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('ServiceWorker registration failed:', error);
+        }
+    });
+}
+
+// تحديث دالة startCall لدعم المكالمات في الخلفية
+async function startCall(type) {
+    try {
+        const button = document.querySelector(`.${type}-call`);
+        if (!button || !currentChatUser) return;
+        
+        button.classList.add('calling');
+
+        // التحقق من الأذونات
+        const hasPermissions = await checkAndRequestPermissions(type);
+        if (!hasPermissions) {
+            button.classList.remove('calling');
+            return;
+        }
+
+        // إخطار Service Worker ببدء المكالمة
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'CALL_STATUS',
+                isActive: true,
+                callerName: currentUser.username,
+                callerAvatar: currentUser.avatarUrl,
+                callType: type
+            });
+        }
+
+        // بقية منطق المكالمة...
+        const mediaConfig = {
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            },
+            video: type === 'video'
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia(mediaConfig);
+        showCallInterface(type);
+        setupPeerConnection();
+        await callAudio.startRingback();
+
+        // إرسال طلب المكالمة للمستخدم الآخر
+        await database.ref(`calls/${currentChatUser.uid}/active`).set({
+            type: `${type}-call-offer`,
+            from: currentUser.uid,
+            fromName: currentUser.username,
+            fromAvatar: currentUser.avatarUrl,
+            to: currentChatUser.uid,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+
+    } catch (error) {
+        console.error('Error starting call:', error);
+        button?.classList.remove('calling');
+        handleCallError(error);
+    }
+}
+
+// تحديث دالة إنهاء المكالمة
+async function endCall() {
+    try {
+        // إخطار Service Worker بإنهاء المكالمة
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'CALL_STATUS',
+                isActive: false
+            });
+        }
+
+        // إيقاف الأصوات والمسارات
+        callAudio.stopAll();
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+
+        // إغلاق اتصال WebRTC
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+
+        // تحديث واجهة المستخدم
+        const callInterface = document.getElementById('call-interface');
+        if (callInterface) {
+            callInterface.style.display = 'none';
+        }
+
+        // تحديث حالة المكالمة في Firebase
+        if (currentChatUser) {
+            await database.ref(`calls/${currentChatUser.uid}/status`).set({
+                type: 'ended',
+                from: currentUser.uid,
+                timestamp: Date.now()
+            });
+            
+            await database.ref(`calls/${currentChatUser.uid}/active`).remove();
+        }
+
+    } catch (error) {
+        console.error('Error ending call:', error);
+    }
+}
+
+// دالة لتفعيل مزامنة الرسائل في الخلفية
+async function enableBackgroundSync() {
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            // تسجيل مزامنة الرسائل
+            await registration.sync.register('send-messages');
+            // تسجيل مزامنة المكالمات
+            await registration.sync.register('sync-calls');
+        } catch (error) {
+            console.error('Background sync registration failed:', error);
+        }
+    }
+}
+
+// تحديث دالة إرسال الرسائل لدعم المزامنة في الخلفية
+async function sendMessage(event) {
+    event.preventDefault();
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    const selectedFiles = Array.from(document.querySelectorAll('.selected-file-preview'));
+    
+    if (!message && selectedFiles.length === 0) return;
+    
+    try {
+        const messageData = {
+            senderId: currentUser.uid,
+            senderName: currentUser.username,
+            message: message,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            status: navigator.onLine ? 'sent' : 'pending',
+            attachments: []
+        };
+
+        // حفظ الرسالة محلياً إذا كان الاتصال غير متوفر
+        if (!navigator.onLine) {
+            await saveMessageLocally(messageData);
+            enableBackgroundSync();
+        } else {
+            // إرسال الرسالة مباشرة
+            const chatId = getChatId(currentUser.uid, currentChatUser.uid);
+            await database.ref(`chats/${chatId}/messages`).push(messageData);
+        }
+
+        // تنظيف الحقول
+        messageInput.value = '';
+        selectedFiles.forEach(preview => preview.remove());
+
+    } catch (error) {
+        console.error('Error sending message:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في الإرسال',
+            text: error.message
+        });
+    }
+}
  
  </script>
  </body>

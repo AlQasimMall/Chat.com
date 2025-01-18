@@ -2803,14 +2803,13 @@ audio {
 
         <div id="call-interface" class="call-interface">
             <div class="call-container">
-                <div class="caller-background"></div>
-                
-                <div class="call-info">
-                    <img id="caller-avatar" src="" alt="صورة المتصل" class="caller-avatar">
-                    <h3 id="caller-name" class="caller-name"></h3>
-                    <p id="call-status" class="call-status">جاري الاتصال...</p>
-                    <div id="call-timer" class="call-timer">00:00</div>
-                </div>
+                <img id="caller-avatar" src="" alt="صورة المتصل" class="caller-avatar">
+                <h3 id="caller-name" class="caller-name"></h3>
+                <p id="call-status" class="call-status"></p>
+                <div id="call-timer" class="call-timer">00:00</div>
+                <audio id="remote-audio" autoplay></audio>
+                <video id="local-video" autoplay muted playsinline></video>
+                <video id="remote-video" autoplay playsinline></video>
         
                 <audio id="remote-audio" autoplay></audio>
                 
@@ -6358,6 +6357,191 @@ function updateCallStatus(status, duration = null) {
             default:
                 statusElement.textContent = status;
         }
+    }
+}
+
+
+
+// دالة التحقق من وجود العناصر
+function getCallElements() {
+    const elements = {
+        interface: document.getElementById('call-interface'),
+        callerAvatar: document.getElementById('caller-avatar'),
+        callerName: document.getElementById('caller-name'),
+        callStatus: document.getElementById('call-status'),
+        callTimer: document.getElementById('call-timer'),
+        remoteAudio: document.getElementById('remote-audio'),
+        localVideo: document.getElementById('local-video'),
+        remoteVideo: document.getElementById('remote-video')
+    };
+
+    // التحقق من وجود العناصر الأساسية
+    const missingElements = Object.entries(elements)
+        .filter(([key, element]) => !element && ['interface', 'callerAvatar', 'callerName', 'callStatus'].includes(key))
+        .map(([key]) => key);
+
+    if (missingElements.length > 0) {
+        console.error('العناصر المفقودة:', missingElements);
+        return null;
+    }
+
+    return elements;
+}
+
+// تحديث دالة عرض واجهة الاتصال
+function showCallInterface(type) {
+    const elements = getCallElements();
+    if (!elements) {
+        handleCallError(new Error('لم يتم العثور على عناصر واجهة الاتصال'));
+        return;
+    }
+
+    try {
+        // تحديث حالة المكالمة
+        elements.interface.style.display = 'flex';
+        
+        // تحديث معلومات المتصل
+        if (currentChatUser) {
+            elements.callerAvatar.src = currentChatUser.avatarUrl || '/api/placeholder/45/45';
+            elements.callerName.textContent = currentChatUser.username;
+            elements.callStatus.textContent = 'جاري الاتصال...';
+        }
+
+        // إعداد عناصر الفيديو إذا كانت مكالمة فيديو
+        if (type === 'video' && elements.localVideo && localStream) {
+            elements.localVideo.style.display = 'block';
+            elements.localVideo.srcObject = localStream;
+            elements.localVideo.play().catch(console.error);
+        } else if (elements.localVideo) {
+            elements.localVideo.style.display = 'none';
+        }
+
+        // إظهار/إخفاء أزرار التحكم حسب نوع المكالمة
+        const cameraButton = document.querySelector('.toggle-camera');
+        if (cameraButton) {
+            cameraButton.style.display = type === 'video' ? 'flex' : 'none';
+        }
+
+    } catch (error) {
+        console.error('خطأ في عرض واجهة الاتصال:', error);
+        handleCallError(error);
+    }
+}
+
+// تحديث دالة بدء المكالمة
+async function startCall(type) {
+    const elements = getCallElements();
+    if (!elements) {
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في المكالمة',
+            text: 'لم يتم العثور على عناصر واجهة الاتصال'
+        });
+        return;
+    }
+
+    const button = document.querySelector(`.${type}-call`);
+    if (!button || !currentChatUser) return;
+    
+    try {
+        button.classList.add('calling');
+
+        // التحقق من الأذونات
+        const hasPermissions = await checkAndRequestPermissions(type);
+        if (!hasPermissions) {
+            button.classList.remove('calling');
+            return;
+        }
+
+        // تكوين إعدادات الوسائط
+        const mediaConstraints = {
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            },
+            video: type === 'video'
+        };
+
+        // الحصول على الوسائط المحلية
+        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        
+        // إظهار واجهة المكالمة
+        showCallInterface(type);
+        
+        // إعداد اتصال WebRTC
+        setupPeerConnection();
+
+        // تشغيل صوت الرنين
+        await callAudio.startRingback();
+
+        // إرسال طلب المكالمة
+        const callOffer = {
+            type: `${type}-call-offer`,
+            from: currentUser.uid,
+            fromName: currentUser.username,
+            fromAvatar: currentUser.avatarUrl,
+            to: currentChatUser.uid,
+            timestamp: Date.now()
+        };
+
+        await database.ref(`calls/${currentChatUser.uid}/active`).set(callOffer);
+
+    } catch (error) {
+        button.classList.remove('calling');
+        handleCallError(error);
+    }
+}
+
+// تحديث دالة إنهاء المكالمة
+async function endCall() {
+    const elements = getCallElements();
+    
+    try {
+        // إيقاف عداد المكالمة
+        if (callTimer) {
+            clearInterval(callTimer);
+            callTimer = null;
+        }
+
+        // إيقاف الأصوات
+        callAudio.stopAll();
+        callSounds.callEnd.play().catch(console.error);
+
+        // إيقاف المسارات المحلية
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+
+        // إغلاق اتصال WebRTC
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+
+        // إخفاء واجهة المكالمة
+        if (elements?.interface) {
+            elements.interface.style.display = 'none';
+            if (elements.callStatus) {
+                elements.callStatus.textContent = 'تم إنهاء المكالمة';
+            }
+        }
+
+        // إرسال إشعار إنهاء المكالمة
+        if (currentChatUser) {
+            await database.ref(`calls/${currentChatUser.uid}/status`).set({
+                type: 'ended',
+                from: currentUser.uid,
+                timestamp: Date.now(),
+                duration: callDuration
+            });
+            
+            await database.ref(`calls/${currentChatUser.uid}/active`).remove();
+        }
+
+    } catch (error) {
+        console.error('خطأ في إنهاء المكالمة:', error);
     }
 }
  

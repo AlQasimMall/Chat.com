@@ -2783,9 +2783,9 @@ audio {
         <!-- حاوية قائمة المستخدمين -->
         <div id="users-container" class="users-container">
             <div class="chat-header">
-                <div class="header-container">
 
-                    123
+                5555
+                <div class="header-container">
                     <div class="user-info-section">
                         <img id="current-user-avatar" src="/api/placeholder/45/45" alt="الصورة الشخصية" class="user-avatar">
                         <div class="user-details">
@@ -5877,144 +5877,171 @@ async function handleIncomingCall(callData) {
      }
  }
  
- // تحديث دالة handleAcceptCall
  async function handleAcceptCall(callData, type) {
-     try {
-         const mediaConfig = {
-             audio: true,
-             video: type === 'video'
-         };
-         
-         localStream = await navigator.mediaDevices.getUserMedia(mediaConfig);
-         
-         // إظهار واجهة المكالمة
-         showCallInterface(type);
-         
-         // إعداد اتصال WebRTC
-         setupPeerConnection();
-         
-         // تحديث حالة المكالمة
-         const callStatus = document.getElementById('call-status');
-         if (callStatus) {
-             callStatus.textContent = 'تم الاتصال';
-         }
-         
-         // إضافة عنصر عداد المكالمة
-         const timerDisplay = document.createElement('div');
-         timerDisplay.id = 'call-timer';
-         timerDisplay.className = 'call-timer';
-         callStatus.parentNode.insertBefore(timerDisplay, callStatus.nextSibling);
-         
-         // بدء عداد المكالمة
-         startCallTimer();
-         
-         // إرسال رد القبول
-         await database.ref(`calls/${callData.from}/status`).set({
-             type: 'answered',
-             from: currentUser.uid,
-             timestamp: Date.now()
-         });
-         
-     } catch (error) {
-         console.error('خطأ في قبول المكالمة:', error);
-         handleCallError(error);
-     }
- }
- 
- // تحديث دالة handleRejectCall
- async function handleRejectCall(callData) {
-     try {
-         await database.ref(`calls/${callData.from}/status`).set({
-             type: 'rejected',
-             from: currentUser.uid,
-             timestamp: Date.now()
-         });
-         
-         // تحديث حالة المكالمة وإخفاء الواجهة
-         const callStatus = document.getElementById('call-status');
-         if (callStatus) {
-             callStatus.textContent = 'تم رفض المكالمة';
-         }
-         
-         setTimeout(() => {
-             const callInterface = document.getElementById('call-interface');
-             if (callInterface) {
-                 callInterface.style.display = 'none';
-             }
-         }, 1500);
-         
-         await database.ref(`calls/${currentUser.uid}/active`).remove();
-         
-     } catch (error) {
-         console.error('خطأ في رفض المكالمة:', error);
-     }
- }
- 
- // دالة عرض نافذة طلب الأذونات
- function showPermissionDialog(type) {
-     return Swal.fire({
-         title: 'مطلوب أذونات',
-         text: type === 'camera-mic' ? 
-             'يرجى السماح بالوصول إلى الكاميرا والميكروفون' :
-             'يرجى السماح بالوصول إلى الميكروفون',
-         icon: 'warning',
-         showCancelButton: true,
-         confirmButtonText: 'فتح الإعدادات',
-         cancelButtonText: 'إلغاء'
-     }).then((result) => {
-         if (result.isConfirmed) {
-             window.open('chrome://settings/content/camera', '_blank');
-         }
-     });
- }
- 
- async function startCall(type) {
-     const button = document.querySelector(`.${type}-call`);
-     if (!button) return;
-     
-     try {
-         // طلب تفاعل المستخدم أولاً
-         await Swal.fire({
-             title: 'بدء مكالمة',
-             text: type === 'video' ? 'هل تريد بدء مكالمة فيديو؟' : 'هل تريد بدء مكالمة صوتية؟',
-             icon: 'question',
-             showCancelButton: true,
-             confirmButtonText: 'نعم',
-             cancelButtonText: 'لا'
-         }).then(async (result) => {
-             if (result.isConfirmed) {
-                 button.classList.add('calling');
-                 
-                 // التحقق من الأذونات
-                 const hasPermissions = await checkAndRequestPermissions(type);
-                 if (!hasPermissions) {
-                     button.classList.remove('calling');
-                     return;
-                 }
- 
-                 // بدء تشغيل صوت الرنين
-                 await callAudio.startRingback();
- 
-                 // إرسال طلب المكالمة
-                 const callOffer = {
-                     type: `${type}-call-offer`,
-                     from: currentUser.uid,
-                     to: currentChatUser.uid,
-                     timestamp: Date.now()
-                 };
- 
-                 await database.ref(`calls/${currentChatUser.uid}/active`).set(callOffer);
-             }
-         });
- 
-     } catch (error) {
-         console.error(`خطأ في بدء مكالمة ${type}:`, error);
-         button.classList.remove('calling');
-         callAudio.stopAll();
-         handleCallError(error);
-     }
- }
- 
+    try {
+        // إيقاف نغمة الرنين فوراً
+        callAudio.stopAll();
+
+        const mediaConstraints = {
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            },
+            video: type === 'video'
+        };
+
+        // الحصول على الوسائط المحلية
+        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        
+        // إظهار واجهة المكالمة
+        showCallInterface(type);
+        
+        // إعداد اتصال WebRTC
+        const peerConnection = await setupPeerConnection();
+
+        // قبول العرض وإنشاء الإجابة
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        console.log('Sending answer to caller');
+
+        // إرسال الإجابة للمتصل
+        await database.ref(`calls/${callData.from}/active`).update({
+            answer: answer,
+            status: 'answered'
+        });
+
+        // تحديث حالة المكالمة
+        updateCallStatus('connected');
+        
+        // تأكد من تفعيل الصوت
+        const remoteAudio = document.getElementById('remote-audio');
+        if (remoteAudio) {
+            remoteAudio.volume = 1;
+            remoteAudio.muted = false;
+            // محاولة تشغيل الصوت
+            await remoteAudio.play().catch(console.error);
+        }
+
+    } catch (error) {
+        console.error('Error in handleAcceptCall:', error);
+        handleCallError(error);
+    }
+}
+
+// تحديث دالة setupPeerConnection
+function setupPeerConnection() {
+    try {
+        peerConnection = new RTCPeerConnection(RTCConfiguration);
+
+        // إضافة مستمعي الأحداث للتتبع
+        peerConnection.onconnectionstatechange = () => {
+            console.log('Connection state:', peerConnection.connectionState);
+        };
+
+        peerConnection.oniceconnectionstatechange = () => {
+            console.log('ICE Connection state:', peerConnection.iceConnectionState);
+        };
+
+        peerConnection.onicegatheringstatechange = () => {
+            console.log('ICE Gathering state:', peerConnection.iceGatheringState);
+        };
+
+        peerConnection.onsignalingstatechange = () => {
+            console.log('Signaling state:', peerConnection.signalingState);
+        };
+
+        // إضافة المسارات المحلية
+        if (localStream) {
+            localStream.getTracks().forEach(track => {
+                console.log('Adding local track:', track.kind);
+                peerConnection.addTrack(track, localStream);
+            });
+        }
+
+        // استقبال المسارات عن بعد
+        peerConnection.ontrack = event => {
+            console.log('Received remote track:', event.track.kind);
+            remoteStream = event.streams[0];
+            const remoteAudio = document.getElementById('remote-audio');
+            if (remoteAudio) {
+                remoteAudio.srcObject = remoteStream;
+                remoteAudio.volume = 1;
+                remoteAudio.muted = false;
+                remoteAudio.play().catch(console.error);
+            }
+        };
+
+        return peerConnection;
+    } catch (error) {
+        console.error('Error in setupPeerConnection:', error);
+        throw error;
+    }
+}
+
+// تحديث دالة معالجة نغمة الرنين
+// Removed duplicate declaration of callAudio
+
+// إضافة دالة فحص الصوت
+function checkAudioStatus() {
+    const remoteAudio = document.getElementById('remote-audio');
+    if (remoteAudio) {
+        console.log('Remote Audio Status:', {
+            volume: remoteAudio.volume,
+            muted: remoteAudio.muted,
+            paused: remoteAudio.paused,
+            readyState: remoteAudio.readyState,
+            srcObject: remoteAudio.srcObject ? 'present' : 'none'
+        });
+    }
+}
+
+// تحديث دالة إنهاء المكالمة
+async function endCall() {
+    try {
+        // إيقاف جميع الأصوات
+        callAudio.stopAll();
+
+        // إيقاف المسارات
+        if (localStream) {
+            localStream.getTracks().forEach(track => {
+                track.stop();
+                console.log('Stopped local track:', track.kind);
+            });
+            localStream = null;
+        }
+
+        if (remoteStream) {
+            remoteStream.getTracks().forEach(track => {
+                track.stop();
+                console.log('Stopped remote track:', track.kind);
+            });
+            remoteStream = null;
+        }
+
+        // إغلاق اتصال WebRTC
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+
+        // تحديث واجهة المستخدم
+        const callInterface = document.getElementById('call-interface');
+        if (callInterface) {
+            callInterface.style.display = 'none';
+        }
+
+        // تحديث قاعدة البيانات
+        if (currentChatUser) {
+            await database.ref(`calls/${currentChatUser.uid}/active`).remove();
+        }
+
+    } catch (error) {
+        console.error('Error in endCall:', error);
+    }
+}
  // تحديث دالة showCallInterface
  function showCallInterface(type) {
      const callInterface = document.getElementById('call-interface');
@@ -6935,6 +6962,354 @@ async function sendMessage(event) {
     }
 }
  
+
+
+
+
+
+class VoiceCallManager {
+    constructor(firebase, currentUser) {
+        this.db = firebase.database();
+        this.currentUser = currentUser;
+        this.peerConnection = null;
+        this.localStream = null;
+        this.remoteStream = null;
+        this.currentCall = null;
+        this.callTimeout = null;
+
+        // ICE Server configuration
+        this.configuration = {
+            iceServers: [
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    username: 'webrtc@live.com',
+                    credential: 'muazkh'
+                }
+            ],
+            iceCandidatePoolSize: 10
+        };
+
+        // Audio constraints
+        this.audioConstraints = {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            channelCount: 1,
+            sampleRate: 48000,
+            sampleSize: 16
+        };
+
+        // Bind methods
+        this.handleICECandidateEvent = this.handleICECandidateEvent.bind(this);
+        this.handleTrackEvent = this.handleTrackEvent.bind(this);
+        this.handleNegotiationNeededEvent = this.handleNegotiationNeededEvent.bind(this);
+        this.handleConnectionStateChange = this.handleConnectionStateChange.bind(this);
+    }
+
+    // Initialize call setup
+    async initializeCall(remoteUserId) {
+        try {
+            // Reset any existing connections
+            await this.cleanup();
+
+            // Create new RTCPeerConnection
+            this.peerConnection = new RTCPeerConnection(this.configuration);
+
+            // Get local media stream
+            this.localStream = await navigator.mediaDevices.getUserMedia({
+                audio: this.audioConstraints,
+                video: false
+            });
+
+            // Add local stream to peer connection
+            this.localStream.getTracks().forEach(track => {
+                this.peerConnection.addTrack(track, this.localStream);
+            });
+
+            // Set up event listeners
+            this.peerConnection.onicecandidate = this.handleICECandidateEvent;
+            this.peerConnection.ontrack = this.handleTrackEvent;
+            this.peerConnection.onnegotiationneeded = this.handleNegotiationNeededEvent;
+            this.peerConnection.onconnectionstatechange = this.handleConnectionStateChange;
+
+            // Create unique call ID
+            const callId = `${this.currentUser.uid}_${remoteUserId}_${Date.now()}`;
+            this.currentCall = { id: callId, remoteUserId };
+
+            return callId;
+        } catch (error) {
+            console.error('Error initializing call:', error);
+            throw new Error('Failed to initialize call');
+        }
+    }
+
+    // Handle incoming call
+    async handleIncomingCall(callId, callData) {
+        try {
+            // Initialize peer connection for incoming call
+            await this.initializeCall(callData.caller);
+
+            // Set remote description
+            const remoteDesc = new RTCSessionDescription(callData.offer);
+            await this.peerConnection.setRemoteDescription(remoteDesc);
+
+            // Create and set local description
+            const answer = await this.peerConnection.createAnswer();
+            await this.peerConnection.setLocalDescription(answer);
+
+            // Update call status in database
+            await this.db.ref(`calls/${callId}`).update({
+                answer,
+                status: 'connected'
+            });
+
+            // Start call timer
+            this.startCallTimer();
+
+            return true;
+        } catch (error) {
+            console.error('Error handling incoming call:', error);
+            this.handleCallError(error);
+            return false;
+        }
+    }
+
+    // Make outgoing call
+    async makeCall(remoteUserId) {
+        try {
+            const callId = await this.initializeCall(remoteUserId);
+
+            // Create offer
+            const offer = await this.peerConnection.createOffer();
+            await this.peerConnection.setLocalDescription(offer);
+
+            // Save call data to database
+            await this.db.ref(`calls/${callId}`).set({
+                caller: this.currentUser.uid,
+                receiver: remoteUserId,
+                offer: offer,
+                status: 'calling',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Set call timeout
+            this.setCallTimeout(callId);
+
+            return callId;
+        } catch (error) {
+            console.error('Error making call:', error);
+            this.handleCallError(error);
+            return null;
+        }
+    }
+
+    // Handle ICE candidate events
+    async handleICECandidateEvent(event) {
+        if (event.candidate && this.currentCall) {
+            try {
+                await this.db.ref(`calls/${this.currentCall.id}/candidates/${this.currentUser.uid}`)
+                    .push(event.candidate.toJSON());
+            } catch (error) {
+                console.error('Error handling ICE candidate:', error);
+            }
+        }
+    }
+
+    // Handle track events
+    handleTrackEvent(event) {
+        this.remoteStream = event.streams[0];
+        const remoteAudio = document.getElementById('remote-audio');
+        if (remoteAudio && this.remoteStream) {
+            remoteAudio.srcObject = this.remoteStream;
+            remoteAudio.play().catch(console.error);
+        }
+    }
+
+    // Handle negotiation needed
+    async handleNegotiationNeededEvent() {
+        try {
+            if (this.currentCall) {
+                const offer = await this.peerConnection.createOffer();
+                await this.peerConnection.setLocalDescription(offer);
+
+                await this.db.ref(`calls/${this.currentCall.id}`).update({
+                    offer: offer
+                });
+            }
+        } catch (error) {
+            console.error('Error handling negotiation:', error);
+        }
+    }
+
+    // Handle connection state changes
+    handleConnectionStateChange() {
+        const state = this.peerConnection.connectionState;
+        console.log('Connection state change:', state);
+
+        switch (state) {
+            case 'connected':
+                this.clearCallTimeout();
+                this.updateCallStatus('connected');
+                break;
+            case 'disconnected':
+            case 'failed':
+                this.endCall('connection-lost');
+                break;
+            case 'closed':
+                this.cleanup();
+                break;
+        }
+    }
+
+    // Set call timeout
+    setCallTimeout(callId) {
+        this.callTimeout = setTimeout(() => {
+            if (this.currentCall && this.currentCall.id === callId) {
+                this.endCall('no-answer');
+            }
+        }, 30000); // 30 seconds timeout
+    }
+
+    // Clear call timeout
+    clearCallTimeout() {
+        if (this.callTimeout) {
+            clearTimeout(this.callTimeout);
+            this.callTimeout = null;
+        }
+    }
+
+    // Update call status
+    async updateCallStatus(status) {
+        if (this.currentCall) {
+            await this.db.ref(`calls/${this.currentCall.id}`).update({
+                status: status,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+    }
+
+    // Handle call errors
+    handleCallError(error) {
+        console.error('Call error:', error);
+        this.updateCallStatus('error');
+        this.cleanup();
+    }
+
+    // End call
+    async endCall(reason = 'ended') {
+        try {
+            if (this.currentCall) {
+                await this.updateCallStatus(reason);
+                await this.cleanup();
+            }
+        } catch (error) {
+            console.error('Error ending call:', error);
+        }
+    }
+
+    // Cleanup resources
+    async cleanup() {
+        // Clear timeout
+        this.clearCallTimeout();
+
+        // Stop local stream
+        if (this.localStream) {
+            this.localStream.getTracks().forEach(track => track.stop());
+            this.localStream = null;
+        }
+
+        // Close peer connection
+        if (this.peerConnection) {
+            this.peerConnection.close();
+            this.peerConnection = null;
+        }
+
+        // Reset call data
+        if (this.currentCall) {
+            await this.db.ref(`calls/${this.currentCall.id}`).update({
+                status: 'ended',
+                endTimestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            this.currentCall = null;
+        }
+    }
+
+    // Audio controls
+    toggleMute() {
+        if (this.localStream) {
+            const audioTrack = this.localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                return !audioTrack.enabled;
+            }
+        }
+        return false;
+    }
+
+    // Call quality monitoring
+    async monitorCallQuality() {
+        if (!this.peerConnection) return;
+
+        try {
+            const stats = await this.peerConnection.getStats();
+            let audioLevel = 0;
+            let packetLoss = 0;
+
+            stats.forEach(report => {
+                if (report.type === 'media-source') {
+                    audioLevel = report.audioLevel;
+                }
+                if (report.type === 'inbound-rtp') {
+                    packetLoss = report.packetsLost;
+                }
+            });
+
+            return {
+                audioLevel,
+                packetLoss,
+                connectionState: this.peerConnection.connectionState,
+                iceConnectionState: this.peerConnection.iceConnectionState
+            };
+        } catch (error) {
+            console.error('Error monitoring call quality:', error);
+            return null;
+        }
+    }
+}
+
+// Usage example:
+/*
+const callManager = new VoiceCallManager(firebase, currentUser);
+
+// Make a call
+const makeCall = async (remoteUserId) => {
+    const callId = await callManager.makeCall(remoteUserId);
+    if (callId) {
+        console.log('Call started:', callId);
+    }
+};
+
+// Answer a call
+const answerCall = async (callId, callData) => {
+    const success = await callManager.handleIncomingCall(callId, callData);
+    if (success) {
+        console.log('Call answered successfully');
+    }
+};
+
+// End call
+const endCall = () => {
+    callManager.endCall();
+};
+
+// Toggle mute
+const toggleMute = () => {
+    const isMuted = callManager.toggleMute();
+    console.log('Muted:', isMuted);
+};
+*/
  </script>
  </body>
  </html>

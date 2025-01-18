@@ -6201,6 +6201,165 @@ audio {
      }
  }
  
+
+
+
+
+
+ // دالة التحقق من الأذونات وطلبها
+async function checkAndRequestPermissions(mediaType) {
+    try {
+        if (!navigator.permissions || !navigator.mediaDevices) {
+            throw new Error('المتصفح لا يدعم الوصول إلى الوسائط');
+        }
+
+        const permissions = {
+            audio: true,
+            video: mediaType === 'video'
+        };
+
+        // التحقق من أذونات الميكروفون
+        const micPermission = await navigator.permissions.query({ name: 'microphone' });
+        
+        if (permissions.video) {
+            // التحقق من أذونات الكاميرا إذا كانت مكالمة فيديو
+            const camPermission = await navigator.permissions.query({ name: 'camera' });
+            if (micPermission.state === 'denied' || camPermission.state === 'denied') {
+                throw new Error('تم رفض الوصول إلى الكاميرا أو الميكروفون');
+            }
+        } else if (micPermission.state === 'denied') {
+            throw new Error('تم رفض الوصول إلى الميكروفون');
+        }
+
+        // اختبار الوصول للوسائط
+        const stream = await navigator.mediaDevices.getUserMedia(permissions);
+        
+        // إيقاف المسارات مؤقتاً لاختبار الأذونات فقط
+        stream.getTracks().forEach(track => track.stop());
+        
+        return true;
+    } catch (error) {
+        handleCallError(error);
+        return false;
+    }
+}
+
+// دالة معالجة أخطاء المكالمات
+function handleCallError(error) {
+    console.error('خطأ في المكالمة:', error);
+    
+    let errorMessage = 'حدث خطأ أثناء المكالمة';
+    
+    // تخصيص رسائل الخطأ
+    if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        errorMessage = 'تم رفض الإذن للوصول إلى الميكروفون أو الكاميرا';
+    } else if (error.name === 'NotFoundError') {
+        errorMessage = 'لم يتم العثور على جهاز الميكروفون أو الكاميرا';
+    } else if (error.name === 'NotReadableError') {
+        errorMessage = 'لا يمكن الوصول إلى جهاز الميكروفون أو الكاميرا';
+    } else if (error.message) {
+        errorMessage = error.message;
+    }
+
+    // عرض رسالة الخطأ للمستخدم
+    Swal.fire({
+        icon: 'error',
+        title: 'خطأ في المكالمة',
+        text: errorMessage,
+        confirmButtonText: 'حسناً'
+    });
+
+    // إنهاء المكالمة في حالة الخطأ
+    endCall();
+}
+
+// تحديث دالة بدء المكالمة
+async function startCall(type) {
+    const button = document.querySelector(`.${type}-call`);
+    if (!button || !currentChatUser) return;
+    
+    try {
+        button.classList.add('calling');
+
+        // التحقق من الأذونات أولاً
+        const hasPermissions = await checkAndRequestPermissions(type);
+        if (!hasPermissions) {
+            button.classList.remove('calling');
+            return;
+        }
+
+        // تكوين إعدادات الوسائط
+        const mediaConstraints = {
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            },
+            video: type === 'video'
+        };
+
+        // الحصول على الوسائط المحلية
+        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        
+        // إظهار واجهة المكالمة
+        showCallInterface(type);
+        
+        // إعداد اتصال WebRTC
+        setupPeerConnection();
+
+        // تشغيل صوت الرنين
+        await callAudio.startRingback();
+
+        // إرسال طلب المكالمة للمستخدم الآخر
+        const callOffer = {
+            type: `${type}-call-offer`,
+            from: currentUser.uid,
+            fromName: currentUser.username,
+            fromAvatar: currentUser.avatarUrl,
+            to: currentChatUser.uid,
+            timestamp: Date.now()
+        };
+
+        await database.ref(`calls/${currentChatUser.uid}/active`).set(callOffer);
+
+    } catch (error) {
+        handleCallError(error);
+    }
+}
+
+// دالة تحديث حالة المكالمة
+function updateCallStatus(status, duration = null) {
+    const statusElement = document.getElementById('call-status');
+    const timerElement = document.getElementById('call-timer');
+    
+    if (statusElement) {
+        switch (status) {
+            case 'calling':
+                statusElement.textContent = 'جاري الاتصال...';
+                break;
+            case 'connected':
+                statusElement.textContent = 'تم الاتصال';
+                break;
+            case 'ended':
+                statusElement.textContent = 'تم إنهاء المكالمة';
+                if (duration && timerElement) {
+                    const minutes = Math.floor(duration / 60);
+                    const seconds = duration % 60;
+                    timerElement.textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+                break;
+            case 'rejected':
+                statusElement.textContent = 'تم رفض المكالمة';
+                break;
+            case 'missed':
+                statusElement.textContent = 'مكالمة فائتة';
+                break;
+            default:
+                statusElement.textContent = status;
+        }
+    }
+}
  
  </script>
  </body>

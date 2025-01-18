@@ -6349,6 +6349,27 @@ async function handleIncomingCall(callData) {
          }
      }
  }
+ // التحكم في الميكروفون
+function toggleMic() {
+    if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) {
+            audioTrack.enabled = !audioTrack.enabled;
+            const button = document.querySelector('.toggle-mic');
+            button.classList.toggle('muted');
+        }
+    }
+}
+
+// التحكم في السماعة
+function toggleSpeaker() {
+    const audio = document.getElementById('remote-audio');
+    if (audio) {
+        audio.volume = audio.volume === 0 ? 1 : 0;
+        const button = document.querySelector('.toggle-speaker');
+        button.classList.toggle('muted');
+    }
+}
  
  // إضافة دالة toggleMic
  function toggleMic() {

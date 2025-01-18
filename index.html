@@ -2499,6 +2499,80 @@ audio {
     }
 }
 
+/* تنسيقات عداد المكالمة */
+.call-timer {
+    font-size: 1.2rem;
+    color: white;
+    text-align: center;
+    margin-top: 8px;
+    font-family: monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 12px;
+    border-radius: 16px;
+    display: inline-block;
+}
+
+/* تحديث تنسيقات حالة المكالمة */
+.call-status {
+    color: white;
+    text-align: center;
+    margin-top: 12px;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* تنسيقات أزرار التحكم في الصوت */
+.audio-controls {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.audio-control-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.audio-control-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.audio-control-btn.muted {
+    background: rgba(255, 68, 68, 0.6);
+}
+
+/* تنسيقات عنصر الصوت */
+#remote-audio {
+    display: none;
+}
+
+/* تأثيرات انتقالية */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+.calling .audio-control-btn {
+    animation: pulse 1.5s infinite;
+}
     </style>
 </head>
 <body>
@@ -2726,35 +2800,33 @@ audio {
             </div>
         </div>
 
-        <div id="call-interface" class="call-interface">
-            <div class="call-container">
-                <div class="call-header">
-                    <img id="caller-avatar" src="" alt="صورة المتصل" class="caller-avatar">
-                    <h3 id="caller-name" class="caller-name"></h3>
-                    <p id="call-status" class="call-status"></p>
-                </div>
-                
-                <div class="video-container">
-                    <video id="remote-video" class="remote-video" autoplay playsinline></video>
-                    <video id="local-video" class="local-video" autoplay playsinline muted></video>
-                </div>
-                
-                <div class="call-controls">
-                    <button class="control-button toggle-mic" onclick="mediaControls.toggleMic()">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                    <button class="control-button toggle-speaker" onclick="toggleSpeaker()">
-                        <i class="fas fa-volume-up"></i>
-                    </button>
-                    <button class="control-button end-call" onclick="endCall()">
-                        <i class="fas fa-phone-slash"></i>
-                    </button>
-                    <button class="control-button toggle-camera" onclick="mediaControls.toggleCamera()">
-                        <i class="fas fa-video"></i>
-                    </button>
-                </div>
-            </div>
+        <!-- واجهة الاتصال -->
+<div id="call-interface" class="call-">
+    <div class="call-container">interface
+        <div class="caller-background"></div>
+        
+        <div class="call-info">
+            <img id="caller-avatar" src="" alt="صورة المتصل" class="caller-avatar">
+            <h3 id="caller-name" class="caller-name"></h3>
+            <p id="call-status" class="call-status">جاري الاتصال...</p>
+            <div id="call-timer" class="call-timer">00:00</div>
         </div>
+
+        <audio id="remote-audio" autoplay></audio>
+        
+        <div class="call-controls">
+            <button class="control-button toggle-mic" onclick="toggleMic()">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button class="control-button toggle-speaker" onclick="toggleSpeaker()">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <button class="control-button end-call" onclick="endCall()">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+        </div>
+    </div>
+</div>
     <!-- المكتبات المطلوبة -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -5522,7 +5594,12 @@ const mediaConstraints = {
     }
 };
 
-// دالة إعداد اتصال WebRTC
+// إضافة متغيرات للمكالمة
+let callTimer = null;
+let callDuration = 0;
+let callConnection = null;
+
+// تحديث دالة setupPeerConnection
 function setupPeerConnection() {
     try {
         peerConnection = new RTCPeerConnection(RTCConfiguration);
@@ -5543,9 +5620,19 @@ function setupPeerConnection() {
 
         peerConnection.ontrack = event => {
             remoteStream = event.streams[0];
-            const remoteVideo = document.getElementById('remote-video');
-            if (remoteVideo) {
-                remoteVideo.srcObject = remoteStream;
+            const remoteAudio = document.getElementById('remote-audio');
+            if (remoteAudio) {
+                remoteAudio.srcObject = remoteStream;
+                remoteAudio.play().catch(console.error);
+            }
+            // بدء عداد المكالمة
+            startCallTimer();
+        };
+
+        // مراقبة حالة الاتصال
+        peerConnection.oniceconnectionstatechange = () => {
+            if (peerConnection.iceConnectionState === 'disconnected') {
+                endCall();
             }
         };
 
@@ -5555,40 +5642,142 @@ function setupPeerConnection() {
     }
 }
 
-// دالة التحقق من الأذونات
-async function checkAndRequestPermissions(mediaType) {
-    if (!navigator.permissions || !navigator.mediaDevices) {
-        throw new Error('المتصفح لا يدعم الوصول إلى الوسائط');
-    }
+// دالة بدء عداد المكالمة
+function startCallTimer() {
+    const timerDisplay = document.getElementById('call-timer');
+    if (!timerDisplay) return;
 
-    const permissions = {
-        audio: true,
-        video: mediaType === 'video'
-    };
+    callDuration = 0;
+    callTimer = setInterval(() => {
+        callDuration++;
+        const minutes = Math.floor(callDuration / 60);
+        const seconds = callDuration % 60;
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }, 1000);
+}
 
+// تحديث دالة إنهاء المكالمة
+async function endCall() {
     try {
-        const micPermission = await navigator.permissions.query({ name: 'microphone' });
-        
-        if (permissions.video) {
-            const camPermission = await navigator.permissions.query({ name: 'camera' });
-            if (micPermission.state === 'denied' || camPermission.state === 'denied') {
-                await showPermissionDialog('camera-mic');
-                return false;
-            }
-        } else if (micPermission.state === 'denied') {
-            await showPermissionDialog('mic');
-            return false;
+        // إيقاف عداد المكالمة
+        if (callTimer) {
+            clearInterval(callTimer);
+            callTimer = null;
         }
 
-        // اختبار الوصول للوسائط
-        const stream = await navigator.mediaDevices.getUserMedia(permissions);
-        stream.getTracks().forEach(track => track.stop());
-        return true;
+        // إيقاف الأصوات
+        callAudio.stopAll();
+        callSounds.callEnd.play().catch(console.error);
+
+        // إيقاف المسارات المحلية
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+
+        // إغلاق اتصال WebRTC
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+
+        // إخفاء واجهة المكالمة
+        const callInterface = document.getElementById('call-interface');
+        const callStatus = document.getElementById('call-status');
+        if (callInterface) {
+            callInterface.style.display = 'none';
+            if (callStatus) {
+                callStatus.textContent = 'تم إنهاء المكالمة';
+            }
+        }
+
+        // إرسال إشعار إنهاء المكالمة
+        if (currentChatUser) {
+            await database.ref(`calls/${currentChatUser.uid}/status`).set({
+                type: 'ended',
+                from: currentUser.uid,
+                timestamp: Date.now(),
+                duration: callDuration
+            });
+            
+            await database.ref(`calls/${currentChatUser.uid}/active`).remove();
+        }
 
     } catch (error) {
-        console.error('خطأ في التحقق من الأذونات:', error);
+        console.error('خطأ في إنهاء المكالمة:', error);
+    }
+}
+
+// تحديث دالة handleAcceptCall
+async function handleAcceptCall(callData, type) {
+    try {
+        const mediaConfig = {
+            audio: true,
+            video: type === 'video'
+        };
+        
+        localStream = await navigator.mediaDevices.getUserMedia(mediaConfig);
+        
+        // إظهار واجهة المكالمة
+        showCallInterface(type);
+        
+        // إعداد اتصال WebRTC
+        setupPeerConnection();
+        
+        // تحديث حالة المكالمة
+        const callStatus = document.getElementById('call-status');
+        if (callStatus) {
+            callStatus.textContent = 'تم الاتصال';
+        }
+        
+        // إضافة عنصر عداد المكالمة
+        const timerDisplay = document.createElement('div');
+        timerDisplay.id = 'call-timer';
+        timerDisplay.className = 'call-timer';
+        callStatus.parentNode.insertBefore(timerDisplay, callStatus.nextSibling);
+        
+        // بدء عداد المكالمة
+        startCallTimer();
+        
+        // إرسال رد القبول
+        await database.ref(`calls/${callData.from}/status`).set({
+            type: 'answered',
+            from: currentUser.uid,
+            timestamp: Date.now()
+        });
+        
+    } catch (error) {
+        console.error('خطأ في قبول المكالمة:', error);
         handleCallError(error);
-        return false;
+    }
+}
+
+// تحديث دالة handleRejectCall
+async function handleRejectCall(callData) {
+    try {
+        await database.ref(`calls/${callData.from}/status`).set({
+            type: 'rejected',
+            from: currentUser.uid,
+            timestamp: Date.now()
+        });
+        
+        // تحديث حالة المكالمة وإخفاء الواجهة
+        const callStatus = document.getElementById('call-status');
+        if (callStatus) {
+            callStatus.textContent = 'تم رفض المكالمة';
+        }
+        
+        setTimeout(() => {
+            const callInterface = document.getElementById('call-interface');
+            if (callInterface) {
+                callInterface.style.display = 'none';
+            }
+        }, 1500);
+        
+        await database.ref(`calls/${currentUser.uid}/active`).remove();
+        
+    } catch (error) {
+        console.error('خطأ في رفض المكالمة:', error);
     }
 }
 

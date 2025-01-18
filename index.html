@@ -2802,44 +2802,30 @@ audio {
         </div>
 
         <div id="call-interface" class="call-interface">
-    <div class="call-container">
-        <!-- مساحة الفيديو -->
-        <div class="video-container">
-            <video id="remote-video" class="remote-video" autoplay playsinline></video>
-            <video id="local-video" class="local-video" autoplay playsinline muted></video>
-        </div>
+            <div class="call-container">
+                <img id="caller-avatar" src="" alt="صورة المتصل" class="caller-avatar">
+                <h3 id="caller-name" class="caller-name"></h3>
+                <p id="call-status" class="call-status"></p>
+                <div id="call-timer" class="call-timer">00:00</div>
+                <audio id="remote-audio" autoplay></audio>
+                <video id="local-video" autoplay muted playsinline></video>
+                <video id="remote-video" autoplay playsinline></video>
         
-        <!-- معلومات المتصل -->
-        <div class="call-info">
-            <img id="caller-avatar" class="caller-avatar" src="" alt="صورة المتصل">
-            <h3 id="caller-name" class="caller-name"></h3>
-            <p id="call-status" class="call-status"></p>
-            <div id="call-timer" class="call-timer">00:00</div>
+                <audio id="remote-audio" autoplay></audio>
+                
+                <div class="call-controls">
+                    <button class="control-button toggle-mic" onclick="toggleMic()">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="control-button toggle-speaker" onclick="toggleSpeaker()">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                    <button class="control-button end-call" onclick="endCall()">
+                        <i class="fas fa-phone-slash"></i>
+                    </button>
+                </div>
+            </div>
         </div>
-
-        <!-- صوت المكالمة -->
-        <audio id="remote-audio" autoplay></audio>
-        
-        <!-- أزرار التحكم -->
-        <div class="call-controls">
-            <button class="control-button toggle-mic">
-                <i class="fas fa-microphone"></i>
-            </button>
-            <button class="control-button toggle-speaker">
-                <i class="fas fa-volume-up"></i>
-            </button>
-            <button class="control-button toggle-camera">
-                <i class="fas fa-video"></i>
-            </button>
-            <button class="control-button end-call">
-                <i class="fas fa-phone-slash"></i>
-            </button>
-        </div>
-    </div>
-</div>
-
-
-
      <!-- المكتبات المطلوبة -->
      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
      <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -5587,13 +5573,11 @@ audio {
  let peerConnection = null;
  
  // تكوين WebRTC
-const RTCConfiguration = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
-    ]
-};
+ const RTCConfiguration = {
+     iceServers: [
+         { urls: 'stun:stun.l.google.com:19302' }
+     ]
+ };
  
  // إعدادات الوسائط
  const mediaConstraints = {

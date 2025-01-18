@@ -5662,76 +5662,153 @@ audio {
  let localStream = null;
  let remoteStream = null;
  let peerConnection = null;
- 
- // تكوين WebRTC
- const RTCConfiguration = {
-     iceServers: [
-         { urls: 'stun:stun.l.google.com:19302' }
-     ]
- };
- 
- // إعدادات الوسائط
- const mediaConstraints = {
-     audio: {
-         echoCancellation: true,
-         noiseSuppression: true,
-         autoGainControl: true
-     },
-     video: {
-         width: { ideal: 1280 },
-         height: { ideal: 720 },
-         facingMode: 'user'
-     }
- };
- 
+
+
  // إضافة متغيرات للمكالمة
  let callTimer = null;
  let callDuration = 0;
  let callConnection = null;
  
- // تحديث دالة setupPeerConnection
- function setupPeerConnection() {
-     try {
-         peerConnection = new RTCPeerConnection(RTCConfiguration);
- 
-         // إضافة المسارات المحلية
-         if (localStream) {
-             localStream.getTracks().forEach(track => {
-                 peerConnection.addTrack(track, localStream);
-             });
-         }
- 
-         // معالجة الأحداث
-         peerConnection.onicecandidate = event => {
-             if (event.candidate && currentChatUser) {
-                 database.ref(`calls/${currentChatUser.uid}/candidates`).push(event.candidate);
-             }
-         };
- 
-         peerConnection.ontrack = event => {
-             remoteStream = event.streams[0];
-             const remoteAudio = document.getElementById('remote-audio');
-             if (remoteAudio) {
-                 remoteAudio.srcObject = remoteStream;
-                 remoteAudio.play().catch(console.error);
-             }
-             // بدء عداد المكالمة
-             startCallTimer();
-         };
- 
-         // مراقبة حالة الاتصال
-         peerConnection.oniceconnectionstatechange = () => {
-             if (peerConnection.iceConnectionState === 'disconnected') {
-                 endCall();
-             }
-         };
- 
-     } catch (error) {
-         console.error('خطأ في إعداد اتصال WebRTC:', error);
-         handleCallError(error);
-     }
- }
- 
+ // تكوين WebRTC
+const RTCConfiguration = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' }
+    ]
+};
+
+// دالة إعداد اتصال WebRTC
+async function setupPeerConnection() {
+    try {
+        peerConnection = new RTCPeerConnection(RTCConfiguration);
+
+        // إضافة المسارات المحلية
+        if (localStream) {
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+        }
+
+        // استقبال المسارات عن بعد
+        peerConnection.ontrack = event => {
+            console.log('Received remote track');
+            remoteStream = event.streams[0];
+            const remoteAudio = document.getElementById('remote-audio');
+            if (remoteAudio) {
+                remoteAudio.srcObject = remoteStream;
+                remoteAudio.play().catch(console.error);
+            }
+        };
+
+        // معالجة ICE candidates
+        peerConnection.onicecandidate = event => {
+            if (event.candidate && currentChatUser) {
+                database.ref(`calls/${currentChatUser.uid}/candidates/${currentUser.uid}`)
+                    .push(event.candidate.toJSON());
+            }
+        };
+
+        // مراقبة حالة الاتصال
+        peerConnection.oniceconnectionstatechange = () => {
+            console.log('ICE Connection State:', peerConnection.iceConnectionState);
+            if (peerConnection.iceConnectionState === 'connected') {
+                updateCallStatus('connected');
+            } else if (peerConnection.iceConnectionState === 'disconnected') {
+                endCall();
+            }
+        };
+
+        return peerConnection;
+    } catch (error) {
+        console.error('Error in setupPeerConnection:', error);
+        throw error;
+    }
+}
+
+// دالة بدء المكالمة (للمتصل)
+async function startCall(type) {
+    try {
+        const mediaConstraints = {
+            audio: true,
+            video: type === 'video'
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        
+        const peerConnection = await setupPeerConnection();
+        
+        // إنشاء وإرسال العرض
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        const callData = {
+            type: `${type}-call-offer`,
+            from: currentUser.uid,
+            to: currentChatUser.uid,
+            offer: offer,
+            timestamp: Date.now()
+        };
+
+        await database.ref(`calls/${currentChatUser.uid}/active`).set(callData);
+        
+        // مراقبة الإجابة
+        database.ref(`calls/${currentUser.uid}/active`).on('value', async (snapshot) => {
+            const data = snapshot.val();
+            if (data?.answer) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            }
+        });
+
+        // مراقبة ICE candidates
+        database.ref(`calls/${currentUser.uid}/candidates/${currentChatUser.uid}`).on('child_added', 
+            async (snapshot) => {
+                const candidate = new RTCIceCandidate(snapshot.val());
+                await peerConnection.addIceCandidate(candidate);
+            }
+        );
+
+    } catch (error) {
+        console.error('Error in startCall:', error);
+        handleCallError(error);
+    }
+}
+
+// دالة معالجة المكالمة الواردة (للمستقبل)
+async function handleIncomingCall(callData) {
+    try {
+        const mediaConstraints = {
+            audio: true,
+            video: callData.type.includes('video')
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        
+        const peerConnection = await setupPeerConnection();
+
+        // قبول العرض وإنشاء الإجابة
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        // إرسال الإجابة
+        await database.ref(`calls/${callData.from}/active`).update({
+            answer: answer
+        });
+
+        // مراقبة ICE candidates
+        database.ref(`calls/${currentUser.uid}/candidates/${callData.from}`).on('child_added', 
+            async (snapshot) => {
+                const candidate = new RTCIceCandidate(snapshot.val());
+                await peerConnection.addIceCandidate(candidate);
+            }
+        );
+
+    } catch (error) {
+        console.error('Error in handleIncomingCall:', error);
+        handleCallError(error);
+    }
+}
  // دالة بدء عداد المكالمة
  function startCallTimer() {
      const timerDisplay = document.getElementById('call-timer');

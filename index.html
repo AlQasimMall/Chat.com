@@ -2572,97 +2572,6 @@ audio {
 
 .calling .audio-control-btn {
     animation: pulse 1.5s infinite;
-} .user-menu-button {
-    background: transparent;
-    border: none;
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.user-menu-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.user-menu-dropdown {
-    position: absolute;
-    top: 60px;
-    left: 20px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    width: 250px;
-    padding: 10px 0;
-    display: none;
-    z-index: 1000;
-    animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.user-menu-header {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-}
-
-.user-menu-item {
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: var(--dark-color);
-    text-decoration: none;
-}
-
-.user-menu-item:hover {
-    background: rgba(124, 77, 255, 0.1);
-    color: var(--primary-color);
-}
-
-.user-menu-item i {
-    width: 20px;
-    text-align: center;
-    font-size: 1.1rem;
-}
-
-.notification-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #ff4444;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.divider {
-    height: 1px;
-    background: #eee;
-    margin: 8px 0;
 }
 
     </style>
@@ -5662,153 +5571,76 @@ audio {
  let localStream = null;
  let remoteStream = null;
  let peerConnection = null;
-
-
+ 
+ // تكوين WebRTC
+ const RTCConfiguration = {
+     iceServers: [
+         { urls: 'stun:stun.l.google.com:19302' }
+     ]
+ };
+ 
+ // إعدادات الوسائط
+ const mediaConstraints = {
+     audio: {
+         echoCancellation: true,
+         noiseSuppression: true,
+         autoGainControl: true
+     },
+     video: {
+         width: { ideal: 1280 },
+         height: { ideal: 720 },
+         facingMode: 'user'
+     }
+ };
+ 
  // إضافة متغيرات للمكالمة
  let callTimer = null;
  let callDuration = 0;
  let callConnection = null;
  
- // تكوين WebRTC
-const RTCConfiguration = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
-    ]
-};
-
-// دالة إعداد اتصال WebRTC
-async function setupPeerConnection() {
-    try {
-        peerConnection = new RTCPeerConnection(RTCConfiguration);
-
-        // إضافة المسارات المحلية
-        if (localStream) {
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
-        }
-
-        // استقبال المسارات عن بعد
-        peerConnection.ontrack = event => {
-            console.log('Received remote track');
-            remoteStream = event.streams[0];
-            const remoteAudio = document.getElementById('remote-audio');
-            if (remoteAudio) {
-                remoteAudio.srcObject = remoteStream;
-                remoteAudio.play().catch(console.error);
-            }
-        };
-
-        // معالجة ICE candidates
-        peerConnection.onicecandidate = event => {
-            if (event.candidate && currentChatUser) {
-                database.ref(`calls/${currentChatUser.uid}/candidates/${currentUser.uid}`)
-                    .push(event.candidate.toJSON());
-            }
-        };
-
-        // مراقبة حالة الاتصال
-        peerConnection.oniceconnectionstatechange = () => {
-            console.log('ICE Connection State:', peerConnection.iceConnectionState);
-            if (peerConnection.iceConnectionState === 'connected') {
-                updateCallStatus('connected');
-            } else if (peerConnection.iceConnectionState === 'disconnected') {
-                endCall();
-            }
-        };
-
-        return peerConnection;
-    } catch (error) {
-        console.error('Error in setupPeerConnection:', error);
-        throw error;
-    }
-}
-
-// دالة بدء المكالمة (للمتصل)
-async function startCall(type) {
-    try {
-        const mediaConstraints = {
-            audio: true,
-            video: type === 'video'
-        };
-
-        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        
-        const peerConnection = await setupPeerConnection();
-        
-        // إنشاء وإرسال العرض
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-
-        const callData = {
-            type: `${type}-call-offer`,
-            from: currentUser.uid,
-            to: currentChatUser.uid,
-            offer: offer,
-            timestamp: Date.now()
-        };
-
-        await database.ref(`calls/${currentChatUser.uid}/active`).set(callData);
-        
-        // مراقبة الإجابة
-        database.ref(`calls/${currentUser.uid}/active`).on('value', async (snapshot) => {
-            const data = snapshot.val();
-            if (data?.answer) {
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-            }
-        });
-
-        // مراقبة ICE candidates
-        database.ref(`calls/${currentUser.uid}/candidates/${currentChatUser.uid}`).on('child_added', 
-            async (snapshot) => {
-                const candidate = new RTCIceCandidate(snapshot.val());
-                await peerConnection.addIceCandidate(candidate);
-            }
-        );
-
-    } catch (error) {
-        console.error('Error in startCall:', error);
-        handleCallError(error);
-    }
-}
-
-// دالة معالجة المكالمة الواردة (للمستقبل)
-async function handleIncomingCall(callData) {
-    try {
-        const mediaConstraints = {
-            audio: true,
-            video: callData.type.includes('video')
-        };
-
-        localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        
-        const peerConnection = await setupPeerConnection();
-
-        // قبول العرض وإنشاء الإجابة
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-
-        // إرسال الإجابة
-        await database.ref(`calls/${callData.from}/active`).update({
-            answer: answer
-        });
-
-        // مراقبة ICE candidates
-        database.ref(`calls/${currentUser.uid}/candidates/${callData.from}`).on('child_added', 
-            async (snapshot) => {
-                const candidate = new RTCIceCandidate(snapshot.val());
-                await peerConnection.addIceCandidate(candidate);
-            }
-        );
-
-    } catch (error) {
-        console.error('Error in handleIncomingCall:', error);
-        handleCallError(error);
-    }
-}
+ // تحديث دالة setupPeerConnection
+ function setupPeerConnection() {
+     try {
+         peerConnection = new RTCPeerConnection(RTCConfiguration);
+ 
+         // إضافة المسارات المحلية
+         if (localStream) {
+             localStream.getTracks().forEach(track => {
+                 peerConnection.addTrack(track, localStream);
+             });
+         }
+ 
+         // معالجة الأحداث
+         peerConnection.onicecandidate = event => {
+             if (event.candidate && currentChatUser) {
+                 database.ref(`calls/${currentChatUser.uid}/candidates`).push(event.candidate);
+             }
+         };
+ 
+         peerConnection.ontrack = event => {
+             remoteStream = event.streams[0];
+             const remoteAudio = document.getElementById('remote-audio');
+             if (remoteAudio) {
+                 remoteAudio.srcObject = remoteStream;
+                 remoteAudio.play().catch(console.error);
+             }
+             // بدء عداد المكالمة
+             startCallTimer();
+         };
+ 
+         // مراقبة حالة الاتصال
+         peerConnection.oniceconnectionstatechange = () => {
+             if (peerConnection.iceConnectionState === 'disconnected') {
+                 endCall();
+             }
+         };
+ 
+     } catch (error) {
+         console.error('خطأ في إعداد اتصال WebRTC:', error);
+         handleCallError(error);
+     }
+ }
+ 
  // دالة بدء عداد المكالمة
  function startCallTimer() {
      const timerDisplay = document.getElementById('call-timer');
@@ -6710,205 +6542,6 @@ async function endCall() {
 
     } catch (error) {
         console.error('خطأ في إنهاء المكالمة:', error);
-    }
-}
-
-if ('serviceWorker' in navigator && 'Notification' in window) {
-    window.addEventListener('load', async () => {
-        try {
-            const registration = await navigator.serviceWorker.register('/service-worker.js');
-            console.log('ServiceWorker registered');
-
-            // طلب إذن الإشعارات
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                // تفعيل الإشعارات في Firebase
-                const messaging = firebase.messaging();
-                const currentToken = await messaging.getToken();
-                
-                if (currentToken) {
-                    // تحديث التوكن في قاعدة البيانات
-                    if (currentUser) {
-                        await database.ref(`users/${currentUser.uid}/notificationToken`).set(currentToken);
-                    }
-                }
-            }
-
-            // إعداد مستمع للمكالمات في الخلفية
-            if (registration.active) {
-                navigator.serviceWorker.addEventListener('message', (event) => {
-                    if (event.data.type === 'ANSWER_CALL') {
-                        handleIncomingCall(event.data.callData);
-                    } else if (event.data.type === 'END_CALL') {
-                        endCall();
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('ServiceWorker registration failed:', error);
-        }
-    });
-}
-
-// تحديث دالة startCall لدعم المكالمات في الخلفية
-async function startCall(type) {
-    try {
-        const button = document.querySelector(`.${type}-call`);
-        if (!button || !currentChatUser) return;
-        
-        button.classList.add('calling');
-
-        // التحقق من الأذونات
-        const hasPermissions = await checkAndRequestPermissions(type);
-        if (!hasPermissions) {
-            button.classList.remove('calling');
-            return;
-        }
-
-        // إخطار Service Worker ببدء المكالمة
-        if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-                type: 'CALL_STATUS',
-                isActive: true,
-                callerName: currentUser.username,
-                callerAvatar: currentUser.avatarUrl,
-                callType: type
-            });
-        }
-
-        // بقية منطق المكالمة...
-        const mediaConfig = {
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            },
-            video: type === 'video'
-        };
-
-        localStream = await navigator.mediaDevices.getUserMedia(mediaConfig);
-        showCallInterface(type);
-        setupPeerConnection();
-        await callAudio.startRingback();
-
-        // إرسال طلب المكالمة للمستخدم الآخر
-        await database.ref(`calls/${currentChatUser.uid}/active`).set({
-            type: `${type}-call-offer`,
-            from: currentUser.uid,
-            fromName: currentUser.username,
-            fromAvatar: currentUser.avatarUrl,
-            to: currentChatUser.uid,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-
-    } catch (error) {
-        console.error('Error starting call:', error);
-        button?.classList.remove('calling');
-        handleCallError(error);
-    }
-}
-
-// تحديث دالة إنهاء المكالمة
-async function endCall() {
-    try {
-        // إخطار Service Worker بإنهاء المكالمة
-        if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-                type: 'CALL_STATUS',
-                isActive: false
-            });
-        }
-
-        // إيقاف الأصوات والمسارات
-        callAudio.stopAll();
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            localStream = null;
-        }
-
-        // إغلاق اتصال WebRTC
-        if (peerConnection) {
-            peerConnection.close();
-            peerConnection = null;
-        }
-
-        // تحديث واجهة المستخدم
-        const callInterface = document.getElementById('call-interface');
-        if (callInterface) {
-            callInterface.style.display = 'none';
-        }
-
-        // تحديث حالة المكالمة في Firebase
-        if (currentChatUser) {
-            await database.ref(`calls/${currentChatUser.uid}/status`).set({
-                type: 'ended',
-                from: currentUser.uid,
-                timestamp: Date.now()
-            });
-            
-            await database.ref(`calls/${currentChatUser.uid}/active`).remove();
-        }
-
-    } catch (error) {
-        console.error('Error ending call:', error);
-    }
-}
-
-// دالة لتفعيل مزامنة الرسائل في الخلفية
-async function enableBackgroundSync() {
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-        try {
-            const registration = await navigator.serviceWorker.ready;
-            // تسجيل مزامنة الرسائل
-            await registration.sync.register('send-messages');
-            // تسجيل مزامنة المكالمات
-            await registration.sync.register('sync-calls');
-        } catch (error) {
-            console.error('Background sync registration failed:', error);
-        }
-    }
-}
-
-// تحديث دالة إرسال الرسائل لدعم المزامنة في الخلفية
-async function sendMessage(event) {
-    event.preventDefault();
-    const messageInput = document.getElementById('message-input');
-    const message = messageInput.value.trim();
-    const selectedFiles = Array.from(document.querySelectorAll('.selected-file-preview'));
-    
-    if (!message && selectedFiles.length === 0) return;
-    
-    try {
-        const messageData = {
-            senderId: currentUser.uid,
-            senderName: currentUser.username,
-            message: message,
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            status: navigator.onLine ? 'sent' : 'pending',
-            attachments: []
-        };
-
-        // حفظ الرسالة محلياً إذا كان الاتصال غير متوفر
-        if (!navigator.onLine) {
-            await saveMessageLocally(messageData);
-            enableBackgroundSync();
-        } else {
-            // إرسال الرسالة مباشرة
-            const chatId = getChatId(currentUser.uid, currentChatUser.uid);
-            await database.ref(`chats/${chatId}/messages`).push(messageData);
-        }
-
-        // تنظيف الحقول
-        messageInput.value = '';
-        selectedFiles.forEach(preview => preview.remove());
-
-    } catch (error) {
-        console.error('Error sending message:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'خطأ في الإرسال',
-            text: error.message
-        });
     }
 }
  
